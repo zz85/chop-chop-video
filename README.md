@@ -1,1 +1,3 @@
-## Experiments with Videos in JS
+## Chop Chop Video
+
+Experiments with Videos in JS

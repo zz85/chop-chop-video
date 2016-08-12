@@ -17,22 +17,25 @@
  * Complicated CV techniques / object recognizition may not be required at this point.
  */
 
+// TODO refactor pixel process to separate class
+
+
 let ctx, video, canvas, greyscale
 
+let slider = getSlider(callback);
+
+
+function callback(action, values) {
+	if (action == 'move') {
+		video.currentTime = values * video.duration;
+	}
+}
 
 video = document.querySelector('video')
-// video.currentTime
-// video.play()
-// video.pause()
-// video.playbackRate
-// video.duration
 
-// https://www.w3.org/2010/05/video/mediaevents.html
-// for (v in video) console.log(v)
-
-video.addEventListener('loadedmetadata', function() {
-	console.log('loadedmetadata', video.duration);
-});
+// video.addEventListener('loadedmetadata', function() {
+// 	console.log('loadedmetadata', video.duration);
+// });
 
 video.addEventListener('durationchange', function() {
 	// do something with total time here.
@@ -40,10 +43,11 @@ video.addEventListener('durationchange', function() {
 });
 
 let processStarted = false;
+let map = {};
 
 video.addEventListener('canplaythrough', function() {
 	// let start processing!
-	video.play();
+
 	if (!processStarted) {
 		canvas = document.createElement('canvas');
 		width = canvas.width = video.videoWidth / 2 | 0; // do resizing?
@@ -57,6 +61,9 @@ video.addEventListener('canplaythrough', function() {
 		processStarted = true;
 
 		document.body.appendChild(canvas);
+
+		// video.play();
+		processFrame();
 	}
 });
 
@@ -75,15 +82,12 @@ function greyscaleImage( idata, greyscale ) {
 		let g = data[ ref + 1 ] / 255;
 		let b = data[ ref + 2 ] / 255;
 
-		// Y'=0.299R'+0.587G'+0.114B'
 		greyscale[ i ] = 0.2126 * r + 0.7152 * g + 0.0722 * b;
 		// greyscale[ i ] = (r + g + b) / 3;
 	}
 
 	return greyscale;
 }
-
-
 
 
 video.addEventListener('timeupdate', function() {
@@ -108,7 +112,6 @@ function processFrame() {
 
 	greyscaleImage(idata, greyscale);
 
-
 	// do ping pong later
 
 	let summed = 0
@@ -121,6 +124,8 @@ function processFrame() {
 		summed += diff * diff;
 	}
 
+
+
 	for ( let i = 0; i < pixels; i++ ) {
 		frameBuffer[i] = greyscale[ i ];
 	}
@@ -128,12 +133,20 @@ function processFrame() {
 	// frameBuffer.set(greyscale);
 
 	const score = summed / pixels;
+	map[ video.currentTime ] = score;
 	if (score > 0.0005) // 0.001
-	console.log('diff', video.currentTime, score);
+	console.log('diff', video.currentTime, score * 100);
 
+	slider.data({
+		currentTime: video.currentTime,
+		duration: video.duration,
+		map
+	});
+
+	// TODO plot the scores
 
 	// video.play();
-	let seek = 1 / 29.97;
+	let seek = 1 / 4; // sample interval of quarter second
 	// 0.25 1/24 1/29.97 30
 
 	if (video.currentTime + seek > video.duration) {
@@ -141,6 +154,16 @@ function processFrame() {
 	}
 	video.currentTime += seek;
 }
+
+
+// video.currentTime
+// video.play()
+// video.pause()
+// video.playbackRate
+// video.duration
+
+// https://www.w3.org/2010/05/video/mediaevents.html
+// for (v in video) console.log(v)
 
 
 /*
