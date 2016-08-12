@@ -6,15 +6,46 @@
 		<title>chop video chop</title>
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
+		body {
+		  margin:50px;
+		}
+
+		#dropbox {
+		  position:relative;
+		  width:400px;
+		  height:400px;
+		  border:2px dashed #333333;
+		  padding:15px;
+		  background:rgba(0, 255, 0, .5);
+		}
+
+		#dropbox::before {
+		  content:"Drop your MP4 file here...";
+		  display:block;
+		  font-size:12px;
+		  padding:5px 0;
+		  left:0;
+		}
+
+		.preview {
+		  display:inline-block;
+		  width:100px;
+		  height:auto;
+		  margin:0 15px 15px;
+		}
 		</style>
 	</head>
 	<body>
 		<p id="time"></p>
-		<video
-			id="v0" controls tabindex="0" autobuffer preload>
+		<video src="manuals 9 Aug/a.mp4"
+			id="v0" controls tabindex="0"  preload>
 		</video>
 
+		<div id="dropbox"></div>
+
 		<script src="video.js"></script>
+		<script src="drop.js"></script>
+
 
 	</body>
 </html>
