@@ -96,8 +96,8 @@ function MotionCutter(video) {
 
 		for ( let i = 0; i < pixels; i++ ) {
 			const diff = greyscale[ i ] - frameBuffer[ i ];
-			// summed += diff * diff;
-			summed += Math.abs(diff)
+			summed += diff * diff;
+			// summed += Math.abs(diff)
 		}
 
 		// for ( let i = 0; i < pixels; i++ ) {

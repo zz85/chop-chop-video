@@ -17,7 +17,7 @@
  * Complicated CV techniques / object recognizition may not be required at this point.
  */
 
-const THRESHOLD = 0.01; // lower is more sensitive... 0.0005 0.001 | 0.01 for absed.
+const THRESHOLD = 0.0005; // lower is more sensitive... 0.0005 0.001 | 0.01 for absed.
 let slider = getSlider(callback);
 
 const seek = 1 / 4; // 1 / 4; // sample interval of quarter second
@@ -57,45 +57,50 @@ motion.process(function(results) {
 
 
 	let selections = []
-	let currentSelection = {
-		start: 0,
-		blanks: 0
-	}
+	// let currentSelection = {
+	// 	start: 0,
+	// 	blanks: 0
+	// }
 
-	for (let i = 0; i < map_values.length; i++ ) {
+	let length = map_values.length;
+	let last_index = 0;
+
+	for (let i = 0; i < length; i++ ) {
 		ts = map_keys[i]
 		value = map_values[i];
 
 		if (value > THRESHOLD) {
 			console.log('1')
 			// there is motion, so do nothing
-			currentSelection.blanks = 0;
-
-			// with the exception of the last item
-			if (i === map_values.length - 1) {
-				currentSelection.end = ts
-				selections.push(currentSelection)
-			}
 		} else {
 			// no more motion, we end the previous selection if there is one, then place marker here
 			console.log('0')
 
-			currentSelection.blanks++;
-
-			if (currentSelection.blanks > 3) {
-				// confidence that there's no motion...
-				currentSelection.end = map_keys[i - currentSelection.blanks]
-
-				if ((currentSelection.end - currentSelection.start) > seek) {
-
-					selections.push(currentSelection)
-					currentSelection = {blanks: 0, start: ts}
+			// SEEK Cursor till next 1
+			let j = i;
+			for (; j < length; j++) {
+				if (map_values[j] > THRESHOLD) {
+					break;
 				}
-
-				// move the slider (in history)
-				currentSelection.start = map_keys[i - currentSelection.blanks]
 			}
+
+			if (j - i > 1) {
+				selections.push({
+					start: map_keys[last_index],
+					end: map_keys[i - 1]
+				})
+				last_index = j;
+			}
+			i = j;
 		}
+	}
+
+	// with the exception of the last item
+	if (last_index < length - 1) {
+		selections.push({
+			start: map_keys[last_index],
+			end: map_keys[length - 1]
+		})
 	}
 
 	console.log('selections', selections)
