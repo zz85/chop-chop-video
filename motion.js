@@ -96,7 +96,8 @@ function MotionCutter(video) {
 
 		for ( let i = 0; i < pixels; i++ ) {
 			const diff = greyscale[ i ] - frameBuffer[ i ];
-			summed += diff * diff;
+			// summed += diff * diff;
+			summed += Math.abs(diff)
 		}
 
 		// for ( let i = 0; i < pixels; i++ ) {
@@ -116,16 +117,11 @@ function MotionCutter(video) {
 		}
 
 		// emit progress
-		self.onProgress(
-		{
+		self.onProgress({
 			keys: map_keys,
 			values: map_values
 		})
 
-
-
-		let seek = 1; // 1 / 4; // sample interval of quarter second
-		// 0.25 1/24 1/29.97 30
 
 		if (video.currentTime + seek > video.duration) {
 			// DONE!

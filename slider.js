@@ -3,8 +3,6 @@
 // create a canvas slider with notation / visualizations
 
 function getSlider(controller) {
-
-
 	// declare stuff
 
 	const PADDING = 10
@@ -59,7 +57,6 @@ function getSlider(controller) {
 
 		ctx.strokeRect(PADDING + progress * scrollWidth, PADDING, 1, scrollHeight);
 
-		const THRESHOLD = 0.0005;
 		ctx.save();
 
 		const { keys, values } = (map || {})
