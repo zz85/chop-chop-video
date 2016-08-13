@@ -17,13 +17,7 @@
  * Complicated CV techniques / object recognizition may not be required at this point.
  */
 
-// TODO refactor pixel process to separate class
-
-
-let ctx, video, canvas, greyscale
-
 let slider = getSlider(callback);
-
 
 function callback(action, values) {
 	if (action == 'move') {
@@ -31,130 +25,12 @@ function callback(action, values) {
 	}
 }
 
-video = document.querySelector('video')
+video = document.querySelector('video');
+motion = new MotionCutter(video);
+motion.process(function(results) {
+	console.log('motion completed!!');
+})
 
-// video.addEventListener('loadedmetadata', function() {
-// 	console.log('loadedmetadata', video.duration);
-// });
-
-video.addEventListener('durationchange', function() {
-	// do something with total time here.
-	// console.log('durationchange', video.duration);
-});
-
-let processStarted = false;
-let map_keys = [];
-let map_values = [];
-
-video.addEventListener('canplaythrough', function() {
-	// let start processing!
-
-	if (!processStarted) {
-		canvas = document.createElement('canvas');
-		width = canvas.width = video.videoWidth / 2 | 0; // do resizing?
-		height = canvas.height = video.videoHeight  / 2 | 0; //
-		greyscale = new Float32Array( width * height );
-		frameBuffer = new Float32Array( width * height ).fill(0);
-
-		console.log(canvas.width, canvas.height);
-
-		ctx = canvas.getContext('2d');
-		processStarted = true;
-
-		document.body.appendChild(canvas);
-
-		// video.play();
-		processFrame();
-	}
-});
-
-let lastTime = 0;
-
-function greyscaleImage( idata, greyscale ) {
-
-	let data = idata.data;
-	let pixels = idata.width * idata.height;
-
-	// conversion to greyscale
-
-	for ( let i = 0; i < pixels; i++ ) {
-		let ref = i * 4;
-		let r = data[ ref + 0 ] / 255;
-		let g = data[ ref + 1 ] / 255;
-		let b = data[ ref + 2 ] / 255;
-
-		greyscale[ i ] = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-	}
-
-	return greyscale;
-}
-
-
-video.addEventListener('timeupdate', function() {
-	const now = video.currentTime;
-
-	if (lastTime !== now) {
-		// console.log('time', video.currentTime, now - lastTime);
-		lastTime = now;
-		// video.pause();
-		processFrame();
-	} else {
-		// console.log('same!');
-	}
-});
-
-
-function processFrame() {
-
-	// ctx.clearRect(0, 0, width, height);
-	ctx.drawImage( video, 0, 0, width, height );
-	idata = ctx.getImageData( 0, 0, width, height );
-
-
-	greyscaleImage(idata, greyscale);
-
-	// do ping pong later
-
-	let summed = 0
-	let pixels = width * height;
-
-	// conversion to greyscale
-
-	for ( let i = 0; i < pixels; i++ ) {
-		const diff = greyscale[ i ] - frameBuffer[ i ];
-		summed += diff * diff;
-	}
-
-	// for ( let i = 0; i < pixels; i++ ) {
-	// 	frameBuffer[i] = greyscale[ i ];
-	// }
-
-	frameBuffer.set(greyscale);
-
-	const score = summed / pixels;
-
-	map_keys.push(video.currentTime);
-	map_values.push(score);
-
-	if (score > 0.0005) // 0.001
-	// console.log('diff', video.currentTime, score * 100);
-
-	slider.data({
-		currentTime: video.currentTime,
-		duration: video.duration,
-		map: {
-			keys: map_keys,
-			values: map_values
-		}
-	});
-	let seek = 1 / 4; // sample interval of quarter second
-	// 0.25 1/24 1/29.97 30
-
-	if (video.currentTime + seek > video.duration) {
-		return;
-	}
-	video.currentTime += seek;
-}
 
 
 // video.currentTime
