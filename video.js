@@ -43,7 +43,9 @@ video.addEventListener('durationchange', function() {
 });
 
 let processStarted = false;
-let map = {};
+let map = [];
+let map_keys = [];
+let map_values = [];
 
 video.addEventListener('canplaythrough', function() {
 	// let start processing!
@@ -103,6 +105,11 @@ video.addEventListener('timeupdate', function() {
 	}
 });
 
+function KV(k, v) {
+	this.k = k;
+	this.v = v;
+}
+
 function processFrame() {
 
 	// ctx.clearRect(0, 0, width, height);
@@ -133,14 +140,21 @@ function processFrame() {
 	// frameBuffer.set(greyscale);
 
 	const score = summed / pixels;
-	map[ video.currentTime ] = score;
+	// map.push({k:video.currentTime, v:score});
+	// map.push(new KV(video.currentTime, score));
+	map_keys.push(video.currentTime);
+	map_values.push(score);
+
 	if (score > 0.0005) // 0.001
-	console.log('diff', video.currentTime, score * 100);
+	// console.log('diff', video.currentTime, score * 100);
 
 	slider.data({
 		currentTime: video.currentTime,
 		duration: video.duration,
-		map
+		map: {
+			keys: map_keys,
+			values: map_values
+		}
 	});
 
 	// TODO plot the scores

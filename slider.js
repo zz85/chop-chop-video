@@ -54,8 +54,12 @@ function getSlider(controller) {
 		const THRESHOLD = 0.0005;
 		ctx.save();
 
-		Object.keys(map || {}).forEach( k => {
-			const v = map[k];
+		const { keys, values } = (map || {})
+
+		if (keys)
+
+		(keys || []).forEach( (k, i) => {
+			const v = values[i];
 
 			if ( v < THRESHOLD ) {
 				ctx.fillStyle = 'blue';
