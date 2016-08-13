@@ -23,8 +23,6 @@ let slider = getSlider(callback);
 const seek = 1 / 4; // 1 / 4; // sample interval of quarter second
 // 0.25 1/24 1/29.97 30
 
-
-
 function callback(action, values) {
 	// Actions
 	if (action == 'move') {
@@ -59,10 +57,6 @@ motion.process(function(results) {
 
 
 	let selections = []
-	// let currentSelection = {
-	// 	start: 0,
-	// 	blanks: 0
-	// }
 
 	let length = map_values.length;
 	let last_index = 0;
@@ -111,7 +105,33 @@ motion.process(function(results) {
 		map: lastValues,
 		selections: s
 	});
+
+
+	video.currentTime = 0;
+	video.play();
+	checks();
 })
+
+
+function checks() {
+	if (!s) return;
+
+	let t = video.currentTime;
+	for (let i = 0; i < s.length; i++) {
+		let entry = s[i];
+		if (t >= entry.start) {
+			if (t <= entry.end) break;
+
+			if (i < s.length - 1 && t < s[i+1].start) {
+				video.currentTime = s[i+1].start;
+			}
+		}
+	}
+
+	requestAnimationFrame(checks)
+}
+
+
 
 
 
