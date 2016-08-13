@@ -41,7 +41,8 @@ function getSlider(controller) {
 		const {
 			currentTime,
 			duration,
-			map
+			map,
+			selections
 		} = data || {};
 
 
@@ -76,6 +77,14 @@ function getSlider(controller) {
 			}
 
 		} )
+
+
+		if (selections) {
+			ctx.fillStyle = 'red';
+			selections.forEach( s =>
+				ctx.fillRect(PADDING + s.start / duration * scrollWidth, PADDING + scrollHeight * 0.5, (s.end - s.start) / duration * scrollWidth, scrollHeight * 0.5)
+			)
+		}
 
 		ctx.restore();
 

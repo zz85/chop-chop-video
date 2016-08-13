@@ -36,6 +36,7 @@ video = document.querySelector('video');
 motion = new MotionCutter(video);
 
 let lastValues
+let s
 
 motion.onProgress = function(values) {
 	lastValues = values
@@ -45,7 +46,8 @@ video.addEventListener('timeupdate', () => {
 	slider.data({
 		currentTime: video.currentTime,
 		duration: video.duration,
-		map: lastValues
+		map: lastValues,
+		selections: s
 	});
 })
 
@@ -70,13 +72,11 @@ motion.process(function(results) {
 		value = map_values[i];
 
 		if (value > THRESHOLD) {
-			console.log('1')
 			// there is motion, so do nothing
 		} else {
-			// no more motion, we end the previous selection if there is one, then place marker here
-			console.log('0')
+			// no more motion
 
-			// SEEK Cursor till next 1
+			// SEEK Cursor till next non-motion block
 			let j = i;
 			for (; j < length; j++) {
 				if (map_values[j] > THRESHOLD) {
@@ -87,7 +87,7 @@ motion.process(function(results) {
 			if (j - i > 1) {
 				selections.push({
 					start: map_keys[last_index],
-					end: map_keys[i - 1]
+					end: map_keys[i]
 				})
 				last_index = j;
 			}
@@ -95,16 +95,22 @@ motion.process(function(results) {
 		}
 	}
 
-	// with the exception of the last item
+	// add hanging last selection
 	if (last_index < length - 1) {
 		selections.push({
 			start: map_keys[last_index],
-			end: map_keys[length - 1]
+			end: video.duration
 		})
 	}
 
 	console.log('selections', selections)
-	window.s = selections;
+	s = selections;
+	slider.data({
+		currentTime: video.currentTime,
+		duration: video.duration,
+		map: lastValues,
+		selections: s
+	});
 })
 
 
