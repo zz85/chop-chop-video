@@ -1,7 +1,9 @@
 /* Motion Cutter */
 
 function MotionCutter(video) {
-	// TODO add theshold?
+	// TODO PARAMETERS
+	// add theshold?
+	// sampling
 
 	let processStarted = false;
 
@@ -11,6 +13,7 @@ function MotionCutter(video) {
 	let completed
 
 	let map_keys = [], map_values = []
+	let self = this;
 
 	this.process = (c) => {
 		video.addEventListener('canplaythrough', activate);
@@ -113,20 +116,22 @@ function MotionCutter(video) {
 		}
 
 		// emit progress
-		slider.data({
-			currentTime: video.currentTime,
-			duration: video.duration,
-			map: {
-				keys: map_keys,
-				values: map_values
-			}
-		});
+		self.onProgress(
+		{
+			keys: map_keys,
+			values: map_values
+		})
 
-		let seek = 1 / 4; // sample interval of quarter second
+
+
+		let seek = 1; // 1 / 4; // sample interval of quarter second
 		// 0.25 1/24 1/29.97 30
 
 		if (video.currentTime + seek > video.duration) {
 			// DONE!
+			video.removeEventListener('canplaythrough', activate);
+			video.removeEventListener('timeupdate', onTimeUpdate);
+
 			completed({
 				map_keys,
 				map_values

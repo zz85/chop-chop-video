@@ -20,6 +20,7 @@
 let slider = getSlider(callback);
 
 function callback(action, values) {
+	// Actions
 	if (action == 'move') {
 		video.currentTime = values * video.duration;
 	}
@@ -27,6 +28,21 @@ function callback(action, values) {
 
 video = document.querySelector('video');
 motion = new MotionCutter(video);
+
+let lastValues
+
+motion.onProgress = function(values) {
+	lastValues = values
+}
+
+video.addEventListener('timeupdate', () => {
+	slider.data({
+		currentTime: video.currentTime,
+		duration: video.duration,
+		map: lastValues
+	});
+})
+
 motion.process(function(results) {
 	console.log('motion completed!!');
 })

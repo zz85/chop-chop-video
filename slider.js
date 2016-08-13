@@ -22,11 +22,19 @@ function getSlider(controller) {
 
 	// canvas.style.background = 'red';
 
-	canvas.addEventListener('mouseover', e => {
+	let mousedown = false;
+	canvas.addEventListener('mousemove', e => {
+		if (mousedown) {
+			controller('move', (e.offsetX - PADDING) / (WIDTH - 2 * PADDING))
+		}
+	})
 
+	canvas.addEventListener('mouseup', e => {
+		mousedown = false;
 	})
 
 	canvas.addEventListener('mousedown', e => {
+		mousedown = true;
 		controller('move', (e.offsetX - PADDING) / (WIDTH - 2 * PADDING))
 	})
 
