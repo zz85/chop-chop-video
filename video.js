@@ -43,7 +43,6 @@ video.addEventListener('durationchange', function() {
 });
 
 let processStarted = false;
-let map = [];
 let map_keys = [];
 let map_values = [];
 
@@ -85,7 +84,6 @@ function greyscaleImage( idata, greyscale ) {
 		let b = data[ ref + 2 ] / 255;
 
 		greyscale[ i ] = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-		// greyscale[ i ] = (r + g + b) / 3;
 	}
 
 	return greyscale;
@@ -105,10 +103,6 @@ video.addEventListener('timeupdate', function() {
 	}
 });
 
-function KV(k, v) {
-	this.k = k;
-	this.v = v;
-}
 
 function processFrame() {
 
@@ -131,17 +125,14 @@ function processFrame() {
 		summed += diff * diff;
 	}
 
+	// for ( let i = 0; i < pixels; i++ ) {
+	// 	frameBuffer[i] = greyscale[ i ];
+	// }
 
-
-	for ( let i = 0; i < pixels; i++ ) {
-		frameBuffer[i] = greyscale[ i ];
-	}
-
-	// frameBuffer.set(greyscale);
+	frameBuffer.set(greyscale);
 
 	const score = summed / pixels;
-	// map.push({k:video.currentTime, v:score});
-	// map.push(new KV(video.currentTime, score));
+
 	map_keys.push(video.currentTime);
 	map_values.push(score);
 
@@ -156,10 +147,6 @@ function processFrame() {
 			values: map_values
 		}
 	});
-
-	// TODO plot the scores
-
-	// video.play();
 	let seek = 1 / 4; // sample interval of quarter second
 	// 0.25 1/24 1/29.97 30
 
