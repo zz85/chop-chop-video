@@ -49,6 +49,8 @@ video.addEventListener('timeupdate', () => {
 	});
 })
 
+
+console.time('process');
 motion.process(function(results) {
 	window.r = results;
 
@@ -105,6 +107,11 @@ motion.process(function(results) {
 		map: lastValues,
 		selections: s
 	});
+
+	console.timeEnd('process');
+	s.forEach( e => { e.start *= 1000; e.end *= 1000; e.duration = e.end - e.start } )
+	const total = s.reduce( (results, next) => results + next.duration, 0)
+	console.log('Total time', total / 1000)
 
 
 	video.currentTime = 0;
