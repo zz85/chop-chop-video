@@ -9,14 +9,13 @@ function getSlider(controller) {
 	const WIDTH = 400
 	const HEIGHT = 50
 
-
 	const canvas = document.createElement('canvas')
-	canvas.width = WIDTH;
-	canvas.height = HEIGHT;
+	canvas.width = WIDTH
+	canvas.height = HEIGHT
 
 	const ctx = canvas.getContext('2d')
 
-	document.body.appendChild(canvas);
+	document.body.appendChild(canvas)
 
 	// canvas.style.background = 'red';
 
@@ -28,11 +27,11 @@ function getSlider(controller) {
 	})
 
 	canvas.addEventListener('mouseup', e => {
-		mousedown = false;
+		mousedown = false
 	})
 
 	canvas.addEventListener('mousedown', e => {
-		mousedown = true;
+		mousedown = true
 		controller('move', (e.offsetX - PADDING) / (WIDTH - 2 * PADDING))
 	})
 
@@ -43,14 +42,14 @@ function getSlider(controller) {
 			duration,
 			map,
 			selections
-		} = data || {};
+		} = data || {}
 
 
-		ctx.clearRect(0, 0, WIDTH, HEIGHT);
+		ctx.clearRect(0, 0, WIDTH, HEIGHT)
 
-		const scrollWidth = WIDTH - 2 * PADDING;
-		const scrollHeight = HEIGHT - 2 * PADDING;
-		const progress = currentTime / duration;
+		const scrollWidth = WIDTH - 2 * PADDING
+		const scrollHeight = HEIGHT - 2 * PADDING
+		const progress = currentTime / duration
 
 
 		// draw inner pane

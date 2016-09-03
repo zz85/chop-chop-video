@@ -34,7 +34,8 @@ video = document.querySelector('video');
 motion = new MotionCutter(video);
 
 let lastValues
-let s
+let timeSelections
+let timeSelectionsInMs
 
 motion.onProgress = function(values) {
 	lastValues = values
@@ -45,13 +46,15 @@ video.addEventListener('timeupdate', () => {
 		currentTime: video.currentTime,
 		duration: video.duration,
 		map: lastValues,
-		selections: s
+		selections: timeSelections
 	});
 })
 
 
 console.time('process');
-motion.process(function(results) {
+motion.process(onCompleted);
+
+function onCompleted(results) {
 	window.r = results;
 
 	const { map_keys, map_values } = results;
@@ -100,37 +103,42 @@ motion.process(function(results) {
 	}
 
 	console.log('selections', selections)
-	s = selections;
 	slider.data({
 		currentTime: video.currentTime,
 		duration: video.duration,
 		map: lastValues,
-		selections: s
+		selections: selections
 	});
 
 	console.timeEnd('process');
-	s.forEach( e => { e.start *= 1000; e.end *= 1000; e.duration = e.end - e.start } )
-	const total = s.reduce( (results, next) => results + next.duration, 0)
+	timeSelections = selections;
+	timeSelectionsInMs = selections.map(e => {
+		return {
+			start: e.start * 1000,
+			end: e.end * 1000,
+			duration: e.end - e.start
+		}
+	});
+	const total = timeSelectionsInMs.reduce( (results, next) => results + next.duration, 0)
 	console.log('Total time', total / 1000)
-
 
 	video.currentTime = 0;
 	video.play();
 	checks();
-})
+}
 
 
 function checks() {
-	if (!s) return;
+	if (!timeSelections) return;
 
 	let t = video.currentTime;
-	for (let i = 0; i < s.length; i++) {
-		let entry = s[i];
+	for (let i = 0; i < timeSelections.length; i++) {
+		let entry = timeSelections[i];
 		if (t >= entry.start) {
 			if (t <= entry.end) break;
 
-			if (i < s.length - 1 && t < s[i+1].start) {
-				video.currentTime = s[i+1].start;
+			if (i < timeSelections.length - 1 && t < timeSelections[i+1].start) {
+				video.currentTime = timeSelections[i+1].start;
 			}
 		}
 	}
