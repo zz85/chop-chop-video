@@ -42,6 +42,25 @@ class SlowFastUI {
         this.points.push({x: 1, y: 0});
     }
 
+    convertPointToCoords(p) {
+        const { width, height } = this;
+
+        return {
+            x:  p.x * width,
+            y: (p.y + 1) * 0.5 * height
+        }
+    }
+
+    convertCoordsToPoint(p) {
+        const { width, height } = this;
+
+        return {
+            x: p.x / width,
+            y: (p.y * 2 / height) - 1
+        }
+    }
+
+
     render() {
         const { ctx, width, height, points } = this;
 
@@ -66,16 +85,12 @@ class SlowFastUI {
         ctx.textBaseline = 'bottom';
         ctx.fillText('SLOW', SPACER, height - SPACER);
 
-        const convertPointToCoords = (p) => ({
-            x:  p.x * width,
-            y: (p.y + 1) * 0.5 * height
-        })
 
-        ctx.strokeStyle = 'red';
+        ctx.strokeStyle = CURVE_COLOR;
         // render spline
         for (let i = 0; i < points.length - 1; i++) {
-            const p0 = convertPointToCoords(points[i]);
-            const p1 = convertPointToCoords(points[i + 1]);
+            const p0 = this.convertPointToCoords(points[i]);
+            const p1 = this.convertPointToCoords(points[i + 1]);
 
             const midx = p0.x * 0.5 + p1.x * 0.5;
             ctx.beginPath();
@@ -91,13 +106,33 @@ class SlowFastUI {
         }
 
         // render points
-        for (let i = 0; i < points.length; i++) {
-            const { x, y } = points[i];
+        if (!this.circles)
+        this.circles = points.map((p) => new Circle(width * p.x, height * (1 + p.y) * 0.5, 10, p));
+
+        this.circles.forEach(c => {
             ctx.fillStyle = BTN_COLOR;
-            ctx.beginPath();
-            ctx.arc(width * x, height * (1 + y) * 0.5, 10, 0, Math.PI * 2);
+            c.render(ctx);
             ctx.fill();
-        }
+        });
+    }
+}
+
+
+class Circle {
+    constructor(x, y, r, tag) {
+        this.x = x;
+        this.y = y;
+        this.r = r;
+        this.tag = tag;
+    }
+
+    render(ctx) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    }
+
+    onmove() {
+
     }
 }
 
@@ -124,5 +159,102 @@ function findClosestPoint() {
     }
 }
 
+class EHandler {
+    constructor() {
+        this.handles = {};
+    }
+
+    bind(k, f) {
+        this.handles[k] = f.bind(this);
+        document.body.addEventListener(k, this.handles[k]);
+    }
+
+    unbind(k) {
+        document.body.removeEventListener(k, this.handles[k]);
+    }
+}
+
+class ClickHandler extends EHandler {
+    constructor() {
+        super();
+        this.nodeDown = null;
+        this.handle();
+    }
+
+    handle() {
+        this.bind('mousedown', this.onmousedown)
+        this.bind('mousemove', this.onmousemove)
+        this.bind('mouseup', this.onmouseup)
+    }
+
+    unhandle() {
+        for (let k in this.handles) {
+            this.unbind(k);
+        }
+    }
+
+    onmousedown(e) {
+        const mx = e.layerX;
+        const my = e.layerY;
+        const node = findNode(mx, my);
+        if (node) {
+            this.nodeDown = {
+                offset: {
+                    x: mx - node.x,
+                    y: my - node.y
+                },
+                node: node
+            }
+        }
+    }
+
+    onmousemove(e) {
+        const mx = e.layerX;
+        const my = e.layerY;
+
+        if (this.nodeDown) {
+            const { node, offset } = this.nodeDown;
+            node.x = mx - offset.x;
+            node.y = my - offset.y;
+            const convert = slowFast.convertCoordsToPoint(node);
+            node.tag.x = convert.x;
+            node.tag.y = convert.y;
+        }
+        else {
+            const node = findNode(mx, my);
+            if (node) {
+                document.body.style.cursor = 'pointer';
+            }
+            else {
+                document.body.style.cursor = 'auto';
+            }
+        }
+    }
+
+    onmouseup(e) {
+        this.nodeDown = null;
+    }
+}
+
+
+
 slowFast = new SlowFastUI(600, 300);
-slowFast.render();
+
+function animate() {
+    slowFast.render();
+    requestAnimationFrame(animate);
+}
+
+click = new ClickHandler();
+function findNode(mx, my) {
+    return slowFast.circles.find(c => {
+        c.render(slowFast.ctx);
+        slowFast.ctx.closePath();
+        if (slowFast.ctx.isPointInPath(mx, my)) {
+            return c;
+        }
+    });
+}
+
+
+animate();
