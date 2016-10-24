@@ -7,6 +7,7 @@ const MID_LINE = '#1b1b1b';
 const SPACER = 5;
 const BTN_COLOR = '#fefefe';
 const CURVE_COLOR = '#ca0347'
+const LINE = '#ebebeb';
 
 /*
 For more spline interpolation, see
@@ -88,35 +89,60 @@ class SlowFastUI {
 
         ctx.strokeStyle = CURVE_COLOR;
         // render spline
+        this.children = new Set();
+        this.curve = new Curve(points.map(this.convertPointToCoords, this), points);
+
+        this.children.add(this.curve);
+
+        // render points
+        // if (!this.circles)
+        this.circles = points.map((p) => new Circle(width * p.x, height * (1 + p.y) * 0.5, 10, p));
+
+        this.circles.forEach(c => {
+            this.children.add(c);
+        });
+
+        for (let c of this.children) {
+            c.render(ctx);
+        }
+
+
+    }
+}
+
+class Curve {
+    constructor(points, tags) {
+        this.points = points;
+        this.tags = tags;
+    }
+
+    path(ctx) {
+        const points = this.points;
         for (let i = 0; i < points.length - 1; i++) {
-            const p0 = this.convertPointToCoords(points[i]);
-            const p1 = this.convertPointToCoords(points[i + 1]);
+            const p0 = points[i];
+            const p1 = points[i + 1];
+
+            if (i === 0) {
+                ctx.beginPath();
+                ctx.lineWidth = 3;
+                ctx.moveTo(p0.x, p0.y);
+            }
 
             const midx = p0.x * 0.5 + p1.x * 0.5;
-            ctx.beginPath();
-            ctx.moveTo(p0.x, p0.y);
 
             ctx.bezierCurveTo(
                 midx, p0.y,
                 midx, p1.y,
                 p1.x, p1.y);
-
-            // ctx.lineTo(p1.x, p1.y);
-            ctx.stroke();
         }
-
-        // render points
-        if (!this.circles)
-        this.circles = points.map((p) => new Circle(width * p.x, height * (1 + p.y) * 0.5, 10, p));
-
-        this.circles.forEach(c => {
-            ctx.fillStyle = BTN_COLOR;
-            c.render(ctx);
-            ctx.fill();
-        });
     }
-}
 
+    render(ctx) {
+        this.path(ctx);
+        ctx.stroke();
+    }
+
+}
 
 class Circle {
     constructor(x, y, r, tag) {
@@ -126,14 +152,17 @@ class Circle {
         this.tag = tag;
     }
 
-    render(ctx) {
+    path(ctx) {
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
     }
 
-    onmove() {
-
+    render(ctx) {
+        ctx.fillStyle = BTN_COLOR;
+        this.path(ctx);
+        ctx.fill();
     }
+
 }
 
 
@@ -247,10 +276,16 @@ function animate() {
 
 click = new ClickHandler();
 function findNode(mx, my) {
+    const ctx = slowFast.ctx;
+
+    slowFast.curve.path(ctx)
+    if (ctx.isPointInPath(mx, my)) {
+        return slowFast.curve;
+    }
+
     return slowFast.circles.find(c => {
-        c.render(slowFast.ctx);
-        slowFast.ctx.closePath();
-        if (slowFast.ctx.isPointInPath(mx, my)) {
+        c.path(ctx);
+        if (ctx.isPointInPath(mx, my)) {
             return c;
         }
     });
