@@ -28,7 +28,9 @@ class SlowFast {
     7. mouse / touch gestures
     8. debug points as a linear list.
 
-    TODO split up touch / click to behaviour events
+    TODO
+    - split up touch / click to behaviour events
+    - drag beyond canvas
     */
 }
 
@@ -56,7 +58,9 @@ https://github.com/llun/slowfast/blob/master/lib/transitions.js
 
 My guess from the behaviour of the slowfast app is bezier curves are being used.
 
-
+Stock Creative Common Videos
+- http://www.wedistill.io/videos/175
+- http://www.wedistill.io/videos/100
 */
 
 class SlowFastUI {
@@ -81,6 +85,14 @@ class SlowFastUI {
         // this.points.push({x: 0.25, y: 0.5}); // this.points.push({x: 0.25, y: 0});
         // this.points.push({x: 0.75, y: -0.5}); // this.points.push({x: 0.75, y: 0});
         this.points.push({x: 1, y: 0});
+
+        this.line = new Line({
+            x0: 0, y0: 0, x1: 0, y1: height
+        });
+    }
+
+    setTime(t) {
+        this.line.x0 = this.line.x1 = t * this.width;
     }
 
     convertPointToCoords(p) {
@@ -128,7 +140,7 @@ class SlowFastUI {
 
             const y = EasingFunc(t);
             const dy = p1.y - p0.y;
-            return y;
+            return p0.y + dy * y;
         }
     }
 
@@ -173,12 +185,6 @@ class SlowFastUI {
 
         if (!this.ghost) {
             this.ghost = new Circle(0, 0, 10, '#333333');
-        }
-
-        if (!this.line) {
-            this.line = new Line({
-                x0: 0, y0: 0, x1: 0, y1: height
-            });
         }
 
         let leftrect, rightrect, wh;
@@ -317,7 +323,7 @@ class ClickHandler extends EHandler {
         const my = e.layerY;
 
         // update line
-        slowFast.line.x0 = slowFast.line.x1 = mx;
+        // slowFast.line.x0 = slowFast.line.x1 = mx;
 
         // update ghost
         slowFast.ghost.x = mx;
@@ -351,10 +357,7 @@ class ClickHandler extends EHandler {
 }
 
 
-function animate() {
-    slowFast.render();
-    requestAnimationFrame(animate);
-}
+
 
 function findNode(mx, my) {
     const ctx = slowFast.ctx;
@@ -371,7 +374,50 @@ function findNode(mx, my) {
     // return nodes.pop();
 }
 
+class Label {
+    constructor(label) {
+        this.dom = document.createElement('span');
+        this.dom.style.fontFamily = 'monospace';
+        document.body.appendChild(this.dom);
+        this.label = label;
+    }
+
+    setText(text) {
+        this.dom.innerHTML = this.label + ': ' + text;
+    }
+}
+
 slowFast = new SlowFastUI(600, 280);
 click = new ClickHandler();
+
+// Set duration
+const duration = 5 * 1000; // 10s
+let currentDuration = 0;
+let lastTick = performance.now();
+
+const MAX_SPEED = 6;
+
+timeLabel = new Label('Time');
+speedLabel = new Label('Speed');
+
 animate();
 
+function animate() {
+    const t = currentDuration / duration;
+    const y = -slowFast.yValueAt(t);
+    const speed = (y >= 0) ? y * MAX_SPEED + 1 : 1 / (-y * MAX_SPEED + 1);
+
+    const now = performance.now();
+    const lapse = now - lastTick;
+    currentDuration += lapse * speed;
+    currentDuration %= duration;
+    lastTick = now;
+
+    slowFast.setTime(t);
+
+    speedLabel.setText(speed.toFixed(2) + 'x');
+    timeLabel.setText((currentDuration / 1000).toFixed(2) + 's');
+
+    slowFast.render();
+    requestAnimationFrame(animate);
+}
