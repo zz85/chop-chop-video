@@ -63,6 +63,24 @@ class SlowFastUI {
         }
     }
 
+    findClosestPoints(cx) {
+        if (cx < 0 || cx > 1) return;
+        let p0, p1;
+        const points = this.points;
+
+        // assume points have been sorted
+        for (let p = 0; p < points.length; p++) {
+            let point = points[p];
+            if (point.x <= cx) {
+                p0 = point;
+            }
+            else if (point.x >= cx) {
+                p1 = point;
+                return [p0, p1];
+            }
+        }
+    }
+
 
     render() {
         const { ctx, width, height, points } = this;
@@ -194,29 +212,60 @@ class Circle {
     }
 }
 
+/*
+class Emitter {
+    constructor() {
 
-function findClosestPoints(cx) {
-    if (cx < 0 || cx > 1) return;
-    let p0, p1;
-    const points = slowFast.points;
+    }
 
-    // assume points have been sorted
-    for (let p = 0; p < points.length; p++) {
-        let point = points[p];
-        if (point.x <= cx) {
-            p0 = point;
-        }
-        else if (point.x >= cx) {
-            p1 = point;
-            return [p0, p1];
-        }
+    on() {
+
+    }
+
+    off() {
+
+    }
+
+    emit() {
+
     }
 }
 
-function EaseInOutCurve() {
-    for (let x = 0; x < width; x++) {
-        // interpolate the points!
-        const cx = x / width;
+
+*/
+
+const Ease = {
+    Linear: function(k) {
+        return k;
+    },
+    QuadraticInOut: function (k) {
+        if ((k *= 2) < 1) {
+            return 0.5 * k * k;
+        }
+
+        return - 0.5 * (--k * (k - 2) - 1);
+    },
+    CubicInOut: function (k) {
+        if ((k *= 2) < 1) {
+            return 0.5 * k * k * k;
+        }
+
+        return 0.5 * ((k -= 2) * k * k + 2);
+    },
+    ExponentialInOut: function (k) {
+        if (k === 0) {
+            return 0;
+        }
+
+        if (k === 1) {
+            return 1;
+        }
+
+        if ((k *= 2) < 1) {
+            return 0.5 * Math.pow(1024, k - 1);
+        }
+
+        return 0.5 * (- Math.pow(2, - 10 * (k - 1)) + 2);
     }
 }
 
@@ -234,6 +283,7 @@ class EHandler {
         document.body.removeEventListener(k, this.handles[k]);
     }
 }
+
 
 class ClickHandler extends EHandler {
     constructor() {
@@ -271,6 +321,13 @@ class ClickHandler extends EHandler {
                 slowFast.ghost.x = mx;
                 slowFast.ghost.y = my;
             }
+
+            if (node === slowFast.ghost) {
+                const p = slowFast.findClosestPoints(mx / slowFast.width);
+                if (p[0]) {
+                    // slowFast.indexOf(p[1])
+                }
+            }
         }
     }
 
@@ -280,18 +337,20 @@ class ClickHandler extends EHandler {
 
         slowFast.line.x0 = slowFast.line.x1 = mx;
         const cx = mx / slowFast.width;
-        const pairs = findClosestPoints(cx);
+        const pairs = slowFast.findClosestPoints(cx);
         if (pairs) {
             const [p0, p1] = pairs;
             const dx = p1.x - p0.x;
             const t = (cx - p0.x) / dx;
 
             const y = unit.solve(t, unit.epsilon);
+            // const y = Ease.QuadraticInOut(t);
+            // const y = Ease.ExponentialInOut(t);
             const dy = p1.y - p0.y;
             const tmp = slowFast.convertPointToCoords({
                 x: cx,
                 y: p0.y + y * dy
-            })
+            });
             slowFast.ghost.x = tmp.x;
             slowFast.ghost.y = tmp.y;
         }
