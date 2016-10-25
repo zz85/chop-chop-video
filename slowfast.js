@@ -1,4 +1,5 @@
 class SlowFast {
+    // JS version of https://itunes.apple.com/sg/app/slow-fast-slow-control-speed/id727309825?mt=8
 }
 
 const BG = '#2b2b2b';
@@ -29,6 +30,7 @@ class SlowFastUI {
         const canvas = document.createElement('canvas');
         canvas.width = width;
         canvas.height = height;
+        // this.canvas = canvas;
 
         this.width = width;
         this.height = height;
@@ -86,8 +88,8 @@ class SlowFastUI {
         ctx.textBaseline = 'bottom';
         ctx.fillText('SLOW', SPACER, height - SPACER);
 
-
         ctx.strokeStyle = CURVE_COLOR;
+
         // render spline
         this.children = new Set();
         this.curve = new Curve(points.map(this.convertPointToCoords, this), points);
@@ -96,24 +98,51 @@ class SlowFastUI {
 
         // render points
         // if (!this.circles)
-        this.circles = points.map((p) => new Circle(width * p.x, height * (1 + p.y) * 0.5, 10, p));
-
+        this.circles = points.map((p) => new Circle(
+            width * p.x, height * (1 + p.y) * 0.5, 10, BTN_COLOR, p));
         this.circles.forEach(c => {
             this.children.add(c);
         });
 
+        if (!this.ghost) {
+            this.ghost = new Circle(0, 0, 10, '#333333');
+        }
+        this.children.add(this.ghost);
+        if (!this.line)
+        this.line = new Line({
+            x0: 0, y0: 0, x1: 0, y1: height
+        });
+        this.children.add(this.line);
+
         for (let c of this.children) {
             c.render(ctx);
         }
+    }
+}
 
+class Line {
+    constructor(o) {
+        Object.assign(this, o);
+    }
 
+    path(ctx) {
+        const {x0, y0, x1, y1} = this;
+        ctx.beginPath();
+        ctx.moveTo(x0, y0);
+        ctx.lineTo(x1, y1);
+    }
+
+    render(ctx) {
+        ctx.strokeStyle = 'yellow';
+        this.path(ctx);
+        ctx.stroke();
     }
 }
 
 class Curve {
-    constructor(points, tags) {
+    constructor(points, tag) {
         this.points = points;
-        this.tags = tags;
+        this.tag = tag;
     }
 
     path(ctx) {
@@ -138,17 +167,18 @@ class Curve {
     }
 
     render(ctx) {
+        ctx.strokeStyle = CURVE_COLOR;
+
         this.path(ctx);
         ctx.stroke();
     }
-
 }
 
 class Circle {
-    constructor(x, y, r, tag) {
-        this.x = x;
-        this.y = y;
-        this.r = r;
+    constructor(x, y, r, color, tag) {
+        Object.assign(this, {
+            x, y, r, color, tag
+        })
         this.tag = tag;
     }
 
@@ -158,33 +188,35 @@ class Circle {
     }
 
     render(ctx) {
-        ctx.fillStyle = BTN_COLOR;
+        ctx.fillStyle = this.color;
         this.path(ctx);
         ctx.fill();
     }
-
 }
 
 
-function findClosestPoint() {
+function findClosestPoints(cx) {
+    if (cx < 0 || cx > 1) return;
+    let p0, p1;
+    const points = slowFast.points;
+
+    // assume points have been sorted
+    for (let p = 0; p < points.length; p++) {
+        let point = points[p];
+        if (point.x <= cx) {
+            p0 = point;
+        }
+        else if (point.x >= cx) {
+            p1 = point;
+            return [p0, p1];
+        }
+    }
+}
+
+function EaseInOutCurve() {
     for (let x = 0; x < width; x++) {
         // interpolate the points!
         const cx = x / width;
-        let p0, p1;
-        // assume points have been sorted
-        for (let p = 0; p < points.length; p++) {
-            let point = points[p];
-            if (point.x <= cx) {
-                p0 = point;
-            }
-            else if (point.x >= cx) {
-                p1 = point;
-                break;
-            }
-        }
-
-        ctx.strokeStyle = 'orange';
-        ctx.lineWidth = 4;
     }
 }
 
@@ -234,6 +266,11 @@ class ClickHandler extends EHandler {
                 },
                 node: node
             }
+
+            if (node instanceof Curve) {
+                slowFast.ghost.x = mx;
+                slowFast.ghost.y = my;
+            }
         }
     }
 
@@ -241,13 +278,33 @@ class ClickHandler extends EHandler {
         const mx = e.layerX;
         const my = e.layerY;
 
+        slowFast.line.x0 = slowFast.line.x1 = mx;
+        const cx = mx / slowFast.width;
+        const pairs = findClosestPoints(cx);
+        if (pairs) {
+            const [p0, p1] = pairs;
+            const dx = p1.x - p0.x;
+            const t = (cx - p0.x) / dx;
+
+            const y = unit.solve(t, unit.epsilon);
+            const dy = p1.y - p0.y;
+            const tmp = slowFast.convertPointToCoords({
+                x: cx,
+                y: p0.y + y * dy
+            })
+            slowFast.ghost.x = tmp.x;
+            slowFast.ghost.y = tmp.y;
+        }
+
         if (this.nodeDown) {
             const { node, offset } = this.nodeDown;
-            node.x = mx - offset.x;
-            node.y = my - offset.y;
-            const convert = slowFast.convertCoordsToPoint(node);
-            node.tag.x = convert.x;
-            node.tag.y = convert.y;
+            if (node instanceof Circle) {
+                node.x = mx - offset.x;
+                node.y = my - offset.y;
+                const convert = slowFast.convertCoordsToPoint(node);
+                node.tag.x = convert.x;
+                node.tag.y = convert.y;
+            }
         }
         else {
             const node = findNode(mx, my);
@@ -266,30 +323,28 @@ class ClickHandler extends EHandler {
 }
 
 
-
-slowFast = new SlowFastUI(600, 300);
-
 function animate() {
     slowFast.render();
     requestAnimationFrame(animate);
 }
 
-click = new ClickHandler();
 function findNode(mx, my) {
     const ctx = slowFast.ctx;
 
-    slowFast.curve.path(ctx)
-    if (ctx.isPointInPath(mx, my)) {
-        return slowFast.curve;
+    var nodes = [];
+    for (let node of slowFast.children) {
+        node.path(ctx);
+        if (ctx.isPointInPath(mx, my)) {
+            nodes.push(node);
+        }
     }
 
-    return slowFast.circles.find(c => {
-        c.path(ctx);
-        if (ctx.isPointInPath(mx, my)) {
-            return c;
-        }
-    });
+    return nodes.pop();
 }
 
+
+slowFast = new SlowFastUI(600, 300);
+click = new ClickHandler();
+unit = new UnitBezier(0.5, 0, 0.5, 1);
 
 animate();
