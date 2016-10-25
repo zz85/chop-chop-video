@@ -111,6 +111,18 @@ class SlowFastUI {
         }
     }
 
+    yValueAt(cx) {
+        const pairs = this.findClosestPoints(cx);
+        if (pairs) {
+            const [p0, p1] = pairs;
+            const dx = p1.x - p0.x;
+            const t = (cx - p0.x) / dx;
+
+            const y = EasingSolution;
+            const dy = p1.y - p0.y;
+            return y;
+        }
+    }
 
     render() {
         const { ctx, width, height, points } = this;
@@ -138,31 +150,32 @@ class SlowFastUI {
 
         ctx.strokeStyle = CURVE_COLOR;
 
-        // render spline
-        this.children = new Set();
-        this.curve = new Curve(points.map(this.convertPointToCoords, this), points);
 
-        this.children.add(this.curve);
+        // Prepare graphical objects
+
+        // render spline
+        this.curve = new EaseCurve(points.map(this.convertPointToCoords, this), this);
 
         // render points
         this.circles = points.map((p) => new Circle(
-            width * p.x, height * (1 + p.y) * 0.5, 10, BTN_COLOR, p));
-
-        this.circles.forEach(c => {
-            this.children.add(c);
-        });
+            width * p.x, height * (1 + p.y) * 0.5, 11, BTN_COLOR, p));
 
         if (!this.ghost) {
             this.ghost = new Circle(0, 0, 10, '#333333');
         }
-        this.children.add(this.ghost);
 
-        if (!this.line)
-        this.line = new Line({
-            x0: 0, y0: 0, x1: 0, y1: height
-        });
+        if (!this.line) {
+            this.line = new Line({
+                x0: 0, y0: 0, x1: 0, y1: height
+            });
+        }
 
+        // Items for rendering
+        this.children = new Set();
+        this.children.add(this.curve);
         this.children.add(this.line);
+        this.circles.forEach(c => this.children.add(c));
+        this.children.add(this.ghost);
 
         for (let c of this.children) {
             c.render(ctx);
@@ -224,6 +237,84 @@ class Curve {
     }
 }
 
+class EaseCurve {
+    constructor(points, tag) {
+        this.points = points;
+        this.tag = tag;
+    }
+
+    path(ctx) {
+        const points = this.points;
+        for (let i = 0; i < points.length - 1; i++) {
+            const p0 = points[i];
+            const p1 = points[i + 1];
+
+            if (i === 0) {
+                ctx.beginPath();
+                ctx.lineWidth = 3;
+                ctx.moveTo(p0.x, p0.y);
+            }
+
+            const dx = p1.x - p0.x;
+            const dy = p1.y - p0.y;
+            for (let x = 0; x < 50; x++) {
+                const t = x / 50;
+                ctx.lineTo(p0.x + dx * t, p0.y + Easing.BezierInOut(t) * dy);
+            }
+        }
+    }
+
+    render(ctx) {
+        ctx.strokeStyle = CURVE_COLOR;
+
+        this.path(ctx);
+        ctx.stroke();
+    }
+}
+
+const Easing = {
+    Linear: function(k) {
+        return k;
+    },
+    QuadraticInOut: function (k) {
+        if ((k *= 2) < 1) {
+            return 0.5 * k * k;
+        }
+
+        return - 0.5 * (--k * (k - 2) - 1);
+    },
+    CubicInOut: function (k) {
+        if ((k *= 2) < 1) {
+            return 0.5 * k * k * k;
+        }
+
+        return 0.5 * ((k -= 2) * k * k + 2);
+    },
+    ExponentialInOut: function (k) {
+        if (k === 0) {
+            return 0;
+        }
+
+        if (k === 1) {
+            return 1;
+        }
+
+        if ((k *= 2) < 1) {
+            return 0.5 * Math.pow(1024, k - 1);
+        }
+
+        return 0.5 * (- Math.pow(2, - 10 * (k - 1)) + 2);
+    },
+
+    unit: new UnitBezier(0.5, 0, 0.5, 1), // standard
+    // unit: new UnitBezier(0.25, 0, 0.75, 1),
+    // unit: new UnitBezier(0.75, 0, 0.25, 1),
+
+    BezierInOut: function(k) {
+        return this.unit.solve(k, this.unit.epsilon);
+    }
+}
+
 class Circle {
     constructor(x, y, r, color, tag) {
         Object.assign(this, {
@@ -260,41 +351,6 @@ class Emitter {
 
     emit() {
 
-    }
-}
-
-const Ease = {
-    Linear: function(k) {
-        return k;
-    },
-    QuadraticInOut: function (k) {
-        if ((k *= 2) < 1) {
-            return 0.5 * k * k;
-        }
-
-        return - 0.5 * (--k * (k - 2) - 1);
-    },
-    CubicInOut: function (k) {
-        if ((k *= 2) < 1) {
-            return 0.5 * k * k * k;
-        }
-
-        return 0.5 * ((k -= 2) * k * k + 2);
-    },
-    ExponentialInOut: function (k) {
-        if (k === 0) {
-            return 0;
-        }
-
-        if (k === 1) {
-            return 1;
-        }
-
-        if ((k *= 2) < 1) {
-            return 0.5 * Math.pow(1024, k - 1);
-        }
-
-        return 0.5 * (- Math.pow(2, - 10 * (k - 1)) + 2);
     }
 }
 */
@@ -346,13 +402,9 @@ class ClickHandler extends EHandler {
                 },
                 node: node
             }
-
-            // if (node instanceof Curve && node !== slowFast.ghost) {
-                // slowFast.ghost.x = mx;
-                // slowFast.ghost.y = my;
-            // }
         }
         else {
+            // - W
             const p = slowFast.findClosestPoints(mx / slowFast.width);
             const points = slowFast.points;
             if (p[0]) {
@@ -370,27 +422,12 @@ class ClickHandler extends EHandler {
         const mx = e.layerX;
         const my = e.layerY;
 
+        // update line
         slowFast.line.x0 = slowFast.line.x1 = mx;
 
+        // update ghost
         slowFast.ghost.x = mx;
         slowFast.ghost.y = my;
-
-        // const cx = mx / slowFast.width;
-        // const pairs = slowFast.findClosestPoints(cx);
-        // if (pairs) {
-        //     const [p0, p1] = pairs;
-        //     const dx = p1.x - p0.x;
-        //     const t = (cx - p0.x) / dx;
-
-        //     const y = unit.solve(t, unit.epsilon);
-        //     const dy = p1.y - p0.y;
-        //     const tmp = slowFast.convertPointToCoords({
-        //         x: cx,
-        //         y: p0.y + y * dy
-        //     });
-        //     slowFast.ghost.x = tmp.x;
-        //     slowFast.ghost.y = tmp.y;
-        // }
 
         if (this.nodeDown) {
             const { node, offset } = this.nodeDown;
@@ -398,6 +435,7 @@ class ClickHandler extends EHandler {
                 node.x = mx - offset.x;
                 node.y = my - offset.y;
                 const convert = slowFast.convertCoordsToPoint(node);
+                // - W
                 node.tag.x = convert.x;
                 node.tag.y = convert.y;
             }
@@ -440,8 +478,7 @@ function findNode(mx, my) {
 }
 
 
-slowFast = new SlowFastUI(600, 300);
+slowFast = new SlowFastUI(600, 280);
 click = new ClickHandler();
-unit = new UnitBezier(0.5, 0, 0.5, 1);
 
 animate();
