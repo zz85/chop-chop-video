@@ -42,6 +42,8 @@ const LINE = '#ebebeb';
 const EasingFunc = Easing.QuadraticInOut; // BezierInOut
 
 /*
+OTHER NOTES
+
 For more spline interpolation, see
 1. CatMull
 https://github.com/mrdoob/three.js/blob/dev/src/extras/curves/CatmullRomCurve3.js
@@ -52,8 +54,9 @@ https://github.com/llun/slowfast/blob/master/lib/transitions.js
 3. Bezier Curves https://github.com/zz85/flowlab/blob/2aefe6c17a3a1593168cc2e3b3ac579ad54d31ce/node.js#L64
 4. Others http://bl.ocks.org/mbostock/4342190
 
-My big guess from the behaviour of the app is this, they are using bezier curves.
-Another possible approach is to use a ease-out-in tween between every points.
+My guess from the behaviour of the slowfast app is bezier curves are being used.
+
+
 */
 
 class SlowFastUI {
@@ -329,21 +332,15 @@ class Rect {
 
     static pattern() {
         if (this.c) return this.c;
-        console.log(this);
-        console.log('p')
         const c = document.createElement('canvas');
         c.width = 4;
         c.height = 4;
         const ctx = c.getContext('2d');
-        const id = ctx.getImageData(0, 0, 4, 4);
-        id.data.fill(0);
-        [3, 6, 9, 12].forEach(n=>{
-            id.data[n * 4 + 0] = 200
-            id.data[n * 4 + 1] = 200
-            id.data[n * 4 + 2] = 200
-            id.data[n * 4 + 3] = 180
-        });
-        ctx.putImageData(id, 0, 0);
+        ctx.strokeStyle = 'rgba(200, 200, 200, 0.5)';
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(4, 4);
+        ctx.stroke();
         this.c = c;
         return c;
     }
