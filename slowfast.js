@@ -1,5 +1,32 @@
 class SlowFast {
     // JS version of https://itunes.apple.com/sg/app/slow-fast-slow-control-speed/id727309825?mt=8
+
+    /*
+    Original behaviour
+    1. points
+        - drag to move
+        - long hold to remove
+    2. everywhere else
+        - touch to move time
+        - long hold to add point
+    3. curve is make of bezier curves
+        - moving point doesn't affect more than 2 segments
+    4. moving 1st and last points trims the videos
+    5. can't move a point across an eariler or later point.
+        - doing so scales the rest of the points.
+    6. video loops
+    7. nice balloon toolbars, and bubble / pill dialogs
+
+    Extended behaviour to explore
+    1. Use other easing functions
+        - also allow to move bezier control points
+    2. allow addition of points only on line?
+    3. allow removal of points by dragging it out
+    4. re-order points if dragged across one another?
+    undo / redo
+    mouse / touch gestures
+
+    */
 }
 
 const BG = '#2b2b2b';
@@ -9,6 +36,7 @@ const SPACER = 5;
 const BTN_COLOR = '#fefefe';
 const CURVE_COLOR = '#ca0347'
 const LINE = '#ebebeb';
+
 
 /*
 For more spline interpolation, see
@@ -30,7 +58,6 @@ class SlowFastUI {
         const canvas = document.createElement('canvas');
         canvas.width = width;
         canvas.height = height;
-        // this.canvas = canvas;
 
         this.width = width;
         this.height = height;
@@ -40,8 +67,10 @@ class SlowFastUI {
 
         this.points = []; // list of {x, y} in floating points
         this.points.push({x: 0, y: 0});
-        this.points.push({x: 0.25, y: 0.5}); // this.points.push({x: 0.25, y: 0});
-        this.points.push({x: 0.75, y: -0.5}); // this.points.push({x: 0.75, y: 0});
+        this.points.push({x: 0.333, y: 0});
+        this.points.push({x: 0.667, y: 0});
+        // this.points.push({x: 0.25, y: 0.5}); // this.points.push({x: 0.25, y: 0});
+        // this.points.push({x: 0.75, y: -0.5}); // this.points.push({x: 0.75, y: 0});
         this.points.push({x: 1, y: 0});
     }
 
@@ -125,7 +154,7 @@ class SlowFastUI {
         if (!this.ghost) {
             this.ghost = new Circle(0, 0, 10, '#333333');
         }
-        this.children.add(this.ghost);
+        // this.children.add(this.ghost);
         if (!this.line)
         this.line = new Line({
             x0: 0, y0: 0, x1: 0, y1: height
@@ -231,9 +260,6 @@ class Emitter {
     }
 }
 
-
-*/
-
 const Ease = {
     Linear: function(k) {
         return k;
@@ -268,6 +294,8 @@ const Ease = {
         return 0.5 * (- Math.pow(2, - 10 * (k - 1)) + 2);
     }
 }
+
+*/
 
 class EHandler {
     constructor() {
@@ -344,8 +372,6 @@ class ClickHandler extends EHandler {
             const t = (cx - p0.x) / dx;
 
             const y = unit.solve(t, unit.epsilon);
-            // const y = Ease.QuadraticInOut(t);
-            // const y = Ease.ExponentialInOut(t);
             const dy = p1.y - p0.y;
             const tmp = slowFast.convertPointToCoords({
                 x: cx,
