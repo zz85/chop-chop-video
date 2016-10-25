@@ -18,7 +18,7 @@ class SlowFast {
     7. nice balloon toolbars, and bubble / pill dialogs
 
     Extended behaviour to explore
-    1. Use other easing functions (Might be more effecient to implement)
+    1. Use other easing functions (DONE)
         - also allow to move bezier control points
     2. allow addition of points only on line?
     3. allow removal of points by dragging it out
@@ -37,7 +37,7 @@ const SPACER = 5;
 const BTN_COLOR = '#fefefe';
 const CURVE_COLOR = '#ca0347'
 const LINE = '#ebebeb';
-
+const EasingFunc = Easing.QuadraticInOut; // BezierInOut
 
 /*
 For more spline interpolation, see
@@ -118,7 +118,7 @@ class SlowFastUI {
             const dx = p1.x - p0.x;
             const t = (cx - p0.x) / dx;
 
-            const y = EasingSolution;
+            const y = EasingFunc(t);
             const dy = p1.y - p0.y;
             return y;
         }
@@ -257,9 +257,10 @@ class EaseCurve {
 
             const dx = p1.x - p0.x;
             const dy = p1.y - p0.y;
-            for (let x = 0; x < 50; x++) {
-                const t = x / 50;
-                ctx.lineTo(p0.x + dx * t, p0.y + Easing.BezierInOut(t) * dy);
+            const divisions = dx * 2 | 0;
+            for (let x = 0; x < divisions; x++) {
+                const t = x / divisions;
+                ctx.lineTo(p0.x + dx * t, p0.y + EasingFunc(t) * dy);
             }
         }
     }
@@ -269,49 +270,6 @@ class EaseCurve {
 
         this.path(ctx);
         ctx.stroke();
-    }
-}
-
-const Easing = {
-    Linear: function(k) {
-        return k;
-    },
-    QuadraticInOut: function (k) {
-        if ((k *= 2) < 1) {
-            return 0.5 * k * k;
-        }
-
-        return - 0.5 * (--k * (k - 2) - 1);
-    },
-    CubicInOut: function (k) {
-        if ((k *= 2) < 1) {
-            return 0.5 * k * k * k;
-        }
-
-        return 0.5 * ((k -= 2) * k * k + 2);
-    },
-    ExponentialInOut: function (k) {
-        if (k === 0) {
-            return 0;
-        }
-
-        if (k === 1) {
-            return 1;
-        }
-
-        if ((k *= 2) < 1) {
-            return 0.5 * Math.pow(1024, k - 1);
-        }
-
-        return 0.5 * (- Math.pow(2, - 10 * (k - 1)) + 2);
-    },
-
-    unit: new UnitBezier(0.5, 0, 0.5, 1), // standard
-    // unit: new UnitBezier(0.25, 0, 0.75, 1),
-    // unit: new UnitBezier(0.75, 0, 0.25, 1),
-
-    BezierInOut: function(k) {
-        return this.unit.solve(k, this.unit.epsilon);
     }
 }
 
