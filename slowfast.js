@@ -337,6 +337,7 @@ class ClickHandler extends EHandler {
     }
 
     handle() {
+        this.bind('dblclick', this.ondblclick)
         this.bind('mousedown', this.onmousedown)
         this.bind('mousemove', this.onmousemove)
         this.bind('mouseup', this.onmouseup)
@@ -374,6 +375,20 @@ class ClickHandler extends EHandler {
                 }));
             }
         }
+    }
+
+    ondblclick(e) {
+        // - W
+        const mx = e.layerX;
+        const my = e.layerY;
+        const node = findNode(mx, my);
+
+        if (node) {
+            const points = slowFast.points;
+            const index = points.indexOf(node.tag);
+            points.splice(index, 1);
+        }
+
     }
 
     onmousemove(e) {
