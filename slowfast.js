@@ -27,6 +27,8 @@ class SlowFast {
     6. undo / redo
     7. mouse / touch gestures
     8. debug points as a linear list.
+
+    TODO split up touch / click to behaviour events
     */
 }
 
@@ -57,11 +59,14 @@ Another possible approach is to use a ease-out-in tween between every points.
 class SlowFastUI {
     constructor(width, height) {
         const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
+        canvas.width = width * devicePixelRatio;
+        canvas.height = height * devicePixelRatio;
 
-        this.width = width;
-        this.height = height;
+        canvas.style.width = width;
+        canvas.style.height = height;
+
+        this.width = canvas.width * devicePixelRatio;
+        this.height = canvas.height * devicePixelRatio;
         this.ctx = canvas.getContext('2d');
 
         document.body.appendChild(canvas);
@@ -127,6 +132,9 @@ class SlowFastUI {
     render() {
         const { ctx, width, height, points } = this;
 
+        ctx.save();
+        // ctx.scale(devicePixelRatio, devicePixelRatio);
+
         // bg color of course
         ctx.fillStyle = BG;
         ctx.fillRect(0, 0, width, height);
@@ -151,10 +159,10 @@ class SlowFastUI {
         ctx.strokeStyle = CURVE_COLOR;
 
 
-        // Prepare graphical objects
+        // Prepare graphical objects (TODO reuse items or not?)
 
         // render spline
-        this.curve = new EaseCurve(points.map(this.convertPointToCoords, this), this);
+        this.curve = new Curve(points.map(this.convertPointToCoords, this), this);
 
         // render points
         this.circles = points.map((p) => new Circle(
@@ -170,8 +178,25 @@ class SlowFastUI {
             });
         }
 
+        let leftrect, rightrect, wh;
+        if (points[0].x > 0) {
+            wh = this.convertPointToCoords({
+                x: points[0].x, y: 0
+            });
+            leftrect = new Rect(0, 0, wh.x, height);
+        }
+
+        if (points[points.length - 1].x < 1) {
+            wh = this.convertPointToCoords({
+                x: points[points.length - 1].x, y: height
+            });
+            rightrect = new Rect(wh.x, 0, width - wh.x, height);
+        }
+
         // Items for rendering
         this.children = new Set();
+        if (leftrect) this.children.add(leftrect);
+        if (rightrect) this.children.add(rightrect);
         this.children.add(this.curve);
         this.children.add(this.line);
         this.circles.forEach(c => this.children.add(c));
@@ -180,6 +205,8 @@ class SlowFastUI {
         for (let c of this.children) {
             c.render(ctx);
         }
+
+        ctx.restore();
     }
 }
 
@@ -293,6 +320,51 @@ class Circle {
     }
 }
 
+class Rect {
+    constructor(x, y, w, h) {
+        Object.assign(this, {
+            x, y, w, h
+        })
+    }
+
+    static pattern() {
+        if (this.c) return this.c;
+        console.log(this);
+        console.log('p')
+        const c = document.createElement('canvas');
+        c.width = 4;
+        c.height = 4;
+        const ctx = c.getContext('2d');
+        const id = ctx.getImageData(0, 0, 4, 4);
+        id.data.fill(0);
+        [3, 6, 9, 12].forEach(n=>{
+            id.data[n * 4 + 0] = 200
+            id.data[n * 4 + 1] = 200
+            id.data[n * 4 + 2] = 200
+            id.data[n * 4 + 3] = 180
+        });
+        ctx.putImageData(id, 0, 0);
+        this.c = c;
+        return c;
+    }
+
+    path(ctx) {
+        ctx.beginPath();
+        ctx.rect(this.x, this.y, this.w, this.h);
+    }
+
+    render(ctx) {
+        var pattern = ctx.createPattern(Rect.pattern(), 'repeat');
+        ctx.fillStyle = pattern;
+        this.path(ctx);
+        ctx.fill();
+    }
+
+    ishit() {
+        // bla
+    }
+}
+
 /*
 class Emitter {
     constructor() {
@@ -386,6 +458,7 @@ class ClickHandler extends EHandler {
         if (node) {
             const points = slowFast.points;
             const index = points.indexOf(node.tag);
+            if (index === 0 || index === points.length - 1) return;
             points.splice(index, 1);
         }
 
