@@ -18,14 +18,15 @@ class SlowFast {
     7. nice balloon toolbars, and bubble / pill dialogs
 
     Extended behaviour to explore
-    1. Use other easing functions
+    1. Use other easing functions (Might be more effecient to implement)
         - also allow to move bezier control points
     2. allow addition of points only on line?
     3. allow removal of points by dragging it out
     4. re-order points if dragged across one another?
-    undo / redo
-    mouse / touch gestures
-
+    5. restrict point adding to the curve only?
+    6. undo / redo
+    7. mouse / touch gestures
+    8. debug points as a linear list.
     */
 }
 
@@ -144,9 +145,9 @@ class SlowFastUI {
         this.children.add(this.curve);
 
         // render points
-        // if (!this.circles)
         this.circles = points.map((p) => new Circle(
             width * p.x, height * (1 + p.y) * 0.5, 10, BTN_COLOR, p));
+
         this.circles.forEach(c => {
             this.children.add(c);
         });
@@ -154,11 +155,13 @@ class SlowFastUI {
         if (!this.ghost) {
             this.ghost = new Circle(0, 0, 10, '#333333');
         }
-        // this.children.add(this.ghost);
+        this.children.add(this.ghost);
+
         if (!this.line)
         this.line = new Line({
             x0: 0, y0: 0, x1: 0, y1: height
         });
+
         this.children.add(this.line);
 
         for (let c of this.children) {
@@ -294,7 +297,6 @@ const Ease = {
         return 0.5 * (- Math.pow(2, - 10 * (k - 1)) + 2);
     }
 }
-
 */
 
 class EHandler {
@@ -345,16 +347,21 @@ class ClickHandler extends EHandler {
                 node: node
             }
 
-            if (node instanceof Curve) {
-                slowFast.ghost.x = mx;
-                slowFast.ghost.y = my;
-            }
+            // if (node instanceof Curve && node !== slowFast.ghost) {
+                // slowFast.ghost.x = mx;
+                // slowFast.ghost.y = my;
+            // }
+        }
+        else {
+            const p = slowFast.findClosestPoints(mx / slowFast.width);
+            const points = slowFast.points;
+            if (p[0]) {
+                const insert = points.indexOf(p[1]);
 
-            if (node === slowFast.ghost) {
-                const p = slowFast.findClosestPoints(mx / slowFast.width);
-                if (p[0]) {
-                    // slowFast.indexOf(p[1])
-                }
+                points.splice(insert, 0, slowFast.convertCoordsToPoint({
+                    x: mx,
+                    y: my
+                }));
             }
         }
     }
@@ -364,26 +371,30 @@ class ClickHandler extends EHandler {
         const my = e.layerY;
 
         slowFast.line.x0 = slowFast.line.x1 = mx;
-        const cx = mx / slowFast.width;
-        const pairs = slowFast.findClosestPoints(cx);
-        if (pairs) {
-            const [p0, p1] = pairs;
-            const dx = p1.x - p0.x;
-            const t = (cx - p0.x) / dx;
 
-            const y = unit.solve(t, unit.epsilon);
-            const dy = p1.y - p0.y;
-            const tmp = slowFast.convertPointToCoords({
-                x: cx,
-                y: p0.y + y * dy
-            });
-            slowFast.ghost.x = tmp.x;
-            slowFast.ghost.y = tmp.y;
-        }
+        slowFast.ghost.x = mx;
+        slowFast.ghost.y = my;
+
+        // const cx = mx / slowFast.width;
+        // const pairs = slowFast.findClosestPoints(cx);
+        // if (pairs) {
+        //     const [p0, p1] = pairs;
+        //     const dx = p1.x - p0.x;
+        //     const t = (cx - p0.x) / dx;
+
+        //     const y = unit.solve(t, unit.epsilon);
+        //     const dy = p1.y - p0.y;
+        //     const tmp = slowFast.convertPointToCoords({
+        //         x: cx,
+        //         y: p0.y + y * dy
+        //     });
+        //     slowFast.ghost.x = tmp.x;
+        //     slowFast.ghost.y = tmp.y;
+        // }
 
         if (this.nodeDown) {
             const { node, offset } = this.nodeDown;
-            if (node instanceof Circle) {
+            if (node instanceof Circle && node !== slowFast.ghost) {
                 node.x = mx - offset.x;
                 node.y = my - offset.y;
                 const convert = slowFast.convertCoordsToPoint(node);
@@ -417,14 +428,15 @@ function findNode(mx, my) {
     const ctx = slowFast.ctx;
 
     var nodes = [];
-    for (let node of slowFast.children) {
+    for (let node of slowFast.circles) {
         node.path(ctx);
         if (ctx.isPointInPath(mx, my)) {
-            nodes.push(node);
+            // nodes.push(node);
+            return node;
         }
     }
 
-    return nodes.pop();
+    // return nodes.pop();
 }
 
 
