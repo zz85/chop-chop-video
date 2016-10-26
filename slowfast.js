@@ -397,7 +397,7 @@ class Label {
 class Ticker {
     constructor() {
         this.duration = 5 * 1000; // 10s
-        this.currentDuration = 0;
+        this.currentTime = 0;
         this.lastTick = performance.now();
     }
 
@@ -405,8 +405,8 @@ class Ticker {
         speed = speed || 1;
         const now = performance.now();
         const lapsed = now - this.lastTick;
-        this.currentDuration += lapsed * speed;
-        this.currentDuration %= this.duration;
+        this.currentTime += lapsed * speed;
+        this.currentTime %= this.duration;
         this.lastTick = now;
     }
 }
@@ -416,7 +416,7 @@ class VideoTicker {
         this.video = document.getElementById('video');
     }
 
-    get currentDuration() {
+    get currentTime() {
         return this.video.currentTime;
     }
 
@@ -425,15 +425,16 @@ class VideoTicker {
     }
 
     update(speed) {
-        if (isNaN(speed)) return
+        if (isNaN(speed)) return;
         this.video.playbackRate = speed;
     }
 }
 
 slowFast = new SlowFastUI(600, 280);
 click = new ClickHandler();
-// ticker = new Ticker();
-ticker = new VideoTicker();
+
+ticker = new Ticker();
+
 
 const MAX_SPEED = 6;
 
@@ -443,7 +444,7 @@ speedLabel = new Label('Speed');
 animate();
 
 function animate() {
-    const t = ticker.currentDuration / ticker.duration;
+    const t = ticker.currentTime / ticker.duration;
     const y = -slowFast.yValueAt(t);
     const speed = (y >= 0) ? y * MAX_SPEED + 1 : 1 / (-y * MAX_SPEED + 1);
 
@@ -451,7 +452,7 @@ function animate() {
     ticker.update(speed);
 
     speedLabel.setText(speed.toFixed(2) + 'x');
-    timeLabel.setText((ticker.currentDuration / 1000).toFixed(2) + 's');
+    timeLabel.setText((ticker.currentTime / 1000).toFixed(2) + 's');
 
     slowFast.render();
     requestAnimationFrame(animate);
