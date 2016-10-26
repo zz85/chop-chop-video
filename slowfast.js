@@ -66,9 +66,10 @@ https://github.com/llun/slowfast/blob/master/lib/transitions.js
 
 My guess from the behaviour of the slowfast app is bezier curves are being used.
 
-Stock Creative Common Videos
+Creative Common Videos
 - http://www.wedistill.io/videos/175
 - http://www.wedistill.io/videos/100
+- http://mazwai.com/#/videos/221
 */
 
 class SlowFastUI {
@@ -416,9 +417,10 @@ function findNode(mx, my) {
 }
 
 class Label {
-    constructor(label) {
+    constructor(label, style) {
         this.dom = document.createElement('span');
         this.dom.style.fontFamily = 'monospace';
+        Object.assign(this.dom.style, style);
         document.body.appendChild(this.dom);
         this.label = label;
     }
@@ -469,11 +471,11 @@ class VideoTicker {
     }
 
     get currentTime() {
-        return this.video.currentTime;
+        return this.video.currentTime * 1000;
     }
 
     get duration() {
-        return this.video.duration;
+        return this.video.duration * 1000;
     }
 
     update(speed) {
@@ -492,9 +494,19 @@ ticker = new VideoTicker();
 
 
 const MAX_SPEED = 6;
+const LABEL_STYLE = {
+    position: 'absolute',
+    display: 'inline-block',
+    background: BG,
+    color: TXT_COLOR,
+    padding: '6px',
+    borderRadius: '6px',
+    left: 'auto',
+    right: 'auto'
+};
 
-timeLabel = new Label('Time');
-speedLabel = new Label('Speed');
+timeLabel = new Label('Time', LABEL_STYLE);
+speedLabel = new Label('Speed', Object.assign({top: 10, left: 10}, LABEL_STYLE));
 
 animate();
 
