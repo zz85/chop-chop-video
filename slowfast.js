@@ -28,6 +28,9 @@ class SlowFast {
     7. mouse / touch gestures
     8. debug points as a linear list.
 
+    DONE
+    - time ticker slider
+
     TODO
     - split up touch / click to behaviour events
     - drag beyond canvas
@@ -387,13 +390,26 @@ class Label {
     }
 }
 
+class Ticker {
+    constructor() {
+        this.duration = 5 * 1000; // 10s
+        this.currentDuration = 0;
+        this.lastTick = performance.now();
+    }
+
+    update(speed) {
+        speed = speed || 1;
+        const now = performance.now();
+        const lapsed = now - this.lastTick;
+        this.currentDuration += lapsed * speed;
+        this.currentDuration %= this.duration;
+        this.lastTick = now;
+    }
+}
+
 slowFast = new SlowFastUI(600, 280);
 click = new ClickHandler();
-
-// Set duration
-const duration = 5 * 1000; // 10s
-let currentDuration = 0;
-let lastTick = performance.now();
+ticker = new Ticker();
 
 const MAX_SPEED = 6;
 
@@ -403,20 +419,15 @@ speedLabel = new Label('Speed');
 animate();
 
 function animate() {
-    const t = currentDuration / duration;
+    const t = ticker.currentDuration / ticker.duration;
     const y = -slowFast.yValueAt(t);
     const speed = (y >= 0) ? y * MAX_SPEED + 1 : 1 / (-y * MAX_SPEED + 1);
 
-    const now = performance.now();
-    const lapse = now - lastTick;
-    currentDuration += lapse * speed;
-    currentDuration %= duration;
-    lastTick = now;
-
     slowFast.setTime(t);
+    ticker.update(speed);
 
     speedLabel.setText(speed.toFixed(2) + 'x');
-    timeLabel.setText((currentDuration / 1000).toFixed(2) + 's');
+    timeLabel.setText((ticker.currentDuration / 1000).toFixed(2) + 's');
 
     slowFast.render();
     requestAnimationFrame(animate);
