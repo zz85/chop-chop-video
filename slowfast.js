@@ -32,8 +32,12 @@ class SlowFast {
     - time ticker slider
 
     TODO
+    - encode videos to smaller sizes for github!
     - split up touch / click to behaviour events
     - drag beyond canvas
+    - retina support
+    - to make time go backwards, should calculate entire length of spline
+    - fix mouse events!
     */
 }
 
@@ -407,9 +411,29 @@ class Ticker {
     }
 }
 
+class VideoTicker {
+    constructor() {
+        this.video = document.getElementById('video');
+    }
+
+    get currentDuration() {
+        return this.video.currentTime;
+    }
+
+    get duration() {
+        return this.video.duration;
+    }
+
+    update(speed) {
+        if (isNaN(speed)) return
+        this.video.playbackRate = speed;
+    }
+}
+
 slowFast = new SlowFastUI(600, 280);
 click = new ClickHandler();
-ticker = new Ticker();
+// ticker = new Ticker();
+ticker = new VideoTicker();
 
 const MAX_SPEED = 6;
 
