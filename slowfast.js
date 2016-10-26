@@ -20,10 +20,10 @@ class SlowFast {
     Extended behaviour to explore
     1. Use other easing functions (DONE)
         - also allow to move bezier control points
-    2. allow addition of points only on line?
+    2. allow addition of points only on the curve?
     3. allow removal of points by dragging it out
     4. re-order points if dragged across one another?
-    5. restrict point adding to the curve only?
+    5. allow time reversing
     6. undo / redo
     7. mouse / touch gestures
     8. debug points as a linear list.
@@ -38,6 +38,7 @@ class SlowFast {
     - retina support
     - to make time go backwards, should calculate entire length of spline
     - fix mouse events!
+    - proper video loader and container
     */
 }
 
@@ -411,6 +412,24 @@ class Ticker {
     }
 }
 
+class TimeControlVideoTicker {
+    constructor() {
+        this.duration = 5 * 1000; // 10s
+        this.currentTime = 0;
+        this.lastTick = performance.now();
+    }
+
+    update(speed) {
+        speed = speed || 1;
+        const now = performance.now();
+        const lapsed = now - this.lastTick;
+        this.currentTime += lapsed * speed;
+        this.currentTime %= this.duration;
+        this.lastTick = now;
+        video.currentTime = this.currentTime / 1000;
+    }
+}
+
 class VideoTicker {
     constructor() {
         this.video = document.getElementById('video');
@@ -434,6 +453,8 @@ slowFast = new SlowFastUI(600, 280);
 click = new ClickHandler();
 
 ticker = new Ticker();
+// ticker = new VideoTicker();
+// ticker = new TimeControlVideoTicker();
 
 
 const MAX_SPEED = 6;
