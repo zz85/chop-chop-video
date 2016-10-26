@@ -48,7 +48,7 @@ const MID_LINE = '#1b1b1b';
 const SPACER = 5;
 const BTN_COLOR = '#fefefe';
 const CURVE_COLOR = '#ca0347'
-const LINE = '#ebebeb';
+const LINE_COLOR = '#ebebeb';
 const EasingFunc = Easing.QuadraticInOut; // BezierInOut
 
 /*
@@ -74,14 +74,11 @@ Stock Creative Common Videos
 class SlowFastUI {
     constructor(width, height) {
         const canvas = document.createElement('canvas');
-        canvas.width = width * devicePixelRatio;
-        canvas.height = height * devicePixelRatio;
 
-        canvas.style.width = width;
-        canvas.style.height = height;
+        this.dom = canvas;
 
-        this.width = canvas.width * devicePixelRatio;
-        this.height = canvas.height * devicePixelRatio;
+        this.resize(width, height, window.devicePixelRatio);
+
         this.ctx = canvas.getContext('2d');
 
         document.body.appendChild(canvas);
@@ -97,6 +94,17 @@ class SlowFastUI {
         this.line = new Line({
             x0: 0, y0: 0, x1: 0, y1: height
         });
+    }
+
+    resize(width, height, scale) {
+        const canvas = this.dom;
+        canvas.width = width * scale;
+        canvas.height = height * scale;
+        canvas.style.width = width;
+        canvas.style.height = height;
+        this.scale = scale;
+        this.width = width;
+        this.height = height;
     }
 
     setTime(t) {
@@ -156,7 +164,7 @@ class SlowFastUI {
         const { ctx, width, height, points } = this;
 
         ctx.save();
-        // ctx.scale(devicePixelRatio, devicePixelRatio);
+        ctx.scale(this.scale, this.scale);
 
         // bg color of course
         ctx.fillStyle = BG;
@@ -248,33 +256,36 @@ class Emitter {
 */
 
 class EHandler {
-    constructor() {
+    constructor(dom) {
         this.handles = {};
+        this.dom = dom;
     }
 
     bind(k, f) {
         this.handles[k] = f.bind(this);
-        document.body.addEventListener(k, this.handles[k]);
+        this.dom.addEventListener(k, this.handles[k]);
     }
 
     unbind(k) {
-        document.body.removeEventListener(k, this.handles[k]);
+        this.dom.removeEventListener(k, this.handles[k]);
     }
 }
 
 
 class ClickHandler extends EHandler {
-    constructor() {
-        super();
+    constructor(dom) {
+        super(dom);
         this.nodeDown = null;
         this.handle();
     }
 
     handle() {
         this.bind('dblclick', this.ondblclick)
-        this.bind('mousedown', this.onmousedown)
-        this.bind('mousemove', this.onmousemove)
-        this.bind('mouseup', this.onmouseup)
+        this.bind('mousedown', this.onmousedown);
+        this.bind('mousemove', this.onmousemove);
+        this.bind('mouseup', this.onmouseup);
+
+        this.bind('touchstart', this.ontouchstart);
     }
 
     unhandle() {
@@ -283,9 +294,25 @@ class ClickHandler extends EHandler {
         }
     }
 
+    ontouchstart(e) {
+        const { clientX, clientY } = e.touches[0];
+        const { left, top } = this.dom.getBoundingClientRect();
+        console.log('ontouchstart', {
+            x: clientX - left,
+            y: clientY - top
+        });
+    }
+
     onmousedown(e) {
-        const mx = e.layerX;
-        const my = e.layerY;
+        const { clientX, clientY } = e;
+        console.log(e);
+        const { left, top } = this.dom.getBoundingClientRect();
+        const x = clientX - left;
+        const y = clientY - top;
+        this.ondragdown(x, y)
+    }
+
+    ondragdown(mx, my) {
         const node = findNode(mx, my);
         if (node) {
             this.nodeDown = {
@@ -327,8 +354,14 @@ class ClickHandler extends EHandler {
     }
 
     onmousemove(e) {
-        const mx = e.layerX;
-        const my = e.layerY;
+        const { clientX, clientY } = e;
+        const { left, top } = this.dom.getBoundingClientRect();
+        const x = clientX - left;
+        const y = clientY - top;
+        this.onmousemove2(x, y)
+    }
+
+    onmousemove2(mx, my) {
 
         // update line
         // slowFast.line.x0 = slowFast.line.x1 = mx;
@@ -450,10 +483,11 @@ class VideoTicker {
 }
 
 slowFast = new SlowFastUI(600, 280);
-click = new ClickHandler();
+console.log(slowFast.dom);
+click = new ClickHandler(slowFast.dom);
 
-ticker = new Ticker();
-// ticker = new VideoTicker();
+// ticker = new Ticker();
+ticker = new VideoTicker();
 // ticker = new TimeControlVideoTicker();
 
 
@@ -463,6 +497,24 @@ timeLabel = new Label('Time');
 speedLabel = new Label('Speed');
 
 animate();
+
+window.addEventListener('resize', () => {
+    console.log('resize', window.devicePixelRatio);
+    slowFast.resize(slowFast.width, slowFast.height, window.devicePixelRatio);
+});
+
+window.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    // e.stopPropagation();
+});
+
+// var z = {};
+// Object.keys(window).filter(k => /^on/.test(k)).forEach(k => {
+//     window[k] = (e) => {
+//         if (!z[k]) console.log(k, e)
+//         z[k] = 1;
+//     }
+// })
 
 function animate() {
     const t = ticker.currentTime / ticker.duration;
