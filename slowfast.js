@@ -301,20 +301,26 @@ class ClickHandler extends EHandler {
         }
     }
 
-    ontouchstart(e) {
-        const { clientX, clientY } = e.touches[0];
+    transform(e) {
+        const { clientX, clientY } = e;
         const { left, top } = this.dom.getBoundingClientRect();
-        console.log(clientX, clientY, left, top, e);
         const x = clientX - left;
         const y = clientY - top;
+        if (rotated) {
+            return {
+                x: y, y: slowFast.height - x
+            };
+        }
+        return {x, y};
+    }
+
+    ontouchstart(e) {
+        const { x, y } = this.transform(e.touches[0]);
         this.onpokedown(x, y);
     }
 
     ontouchmove(e) {
-        const { clientX, clientY } = e.touches[0];
-        const { left, top } = this.dom.getBoundingClientRect();
-        const x = clientX - left;
-        const y = clientY - top;
+        const { x, y } = this.transform(e.touches[0]);
         this.onpokemove(x, y);
     }
 
@@ -323,26 +329,17 @@ class ClickHandler extends EHandler {
     }
 
     onmousedown(e) {
-        const { clientX, clientY } = e;
-        const { left, top } = this.dom.getBoundingClientRect();
-        const x = clientX - left;
-        const y = clientY - top;
+        const { x, y } = this.transform(e);
         this.onpokedown(x, y);
     }
 
     onmousemove(e) {
-        const { clientX, clientY } = e;
-        const { left, top } = this.dom.getBoundingClientRect();
-        const x = clientX - left;
-        const y = clientY - top;
+        const { x, y } = this.transform(e);
         this.onpokemove(x, y);
     }
 
     onmouseup(e) {
-        const { clientX, clientY } = e;
-        const { left, top } = this.dom.getBoundingClientRect();
-        const x = clientX - left;
-        const y = clientY - top;
+        const { x, y } = this.transform(e);
         this.onpokeup(x, y);
     }
 
@@ -537,16 +534,38 @@ speedLabel = new Label('Speed', Object.assign({top: 10, left: 10}, LABEL_STYLE))
 
 animate();
 
-window.addEventListener('resize', () => {
+let rotated = false;
+const resize = () => {
     // slowFast.resize(slowFast.width, slowFast.height, window.devicePixelRatio);
     const shorter = innerWidth < innerHeight ? innerWidth : innerHeight;
     if (innerWidth > innerHeight) {
         document.body.style.transform = 'rotate(90deg)';
+        document.body.style.transformOrigin= '50% 50%';
+        rotated = true;
     }
     else {
         document.body.style.transform = '';
+        rotated = false;
     }
+
     slowFast.resize(shorter, shorter / 2, window.devicePixelRatio);
+}
+
+resize();
+
+window.addEventListener('resize', resize);
+
+/*
+window.matchMedia('(orientation: portrait)').addListener(function(e) {
+    if (!e.matches) return;
+    console.log('hoho portrait', e)
+    resize();
+});
+
+window.matchMedia('(orientation: landscape)').addListener(function(e) {
+    if (!e.matches) return;
+    console.log('hoho landscape', e)
+    resize();
 });
 
 window.addEventListener('orientationchange', (e) => {
@@ -570,8 +589,7 @@ window.addEventListener('orientationchange', (e) => {
         document.body.style.transform = 'rotate(-90deg)';
         break;
     }
-});
-
+});*/
 
 document.body.addEventListener('mousedown', (e) => {
     e.preventDefault();
