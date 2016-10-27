@@ -86,7 +86,7 @@ class SlowFastUI {
 
         this.ctx = canvas.getContext('2d');
 
-        document.body.appendChild(canvas);
+        container.appendChild(canvas);
 
         this.points = []; // list of {x, y} in floating points
         this.points.push({x: 0, y: 0});
@@ -506,10 +506,7 @@ class VideoTicker {
     }
 }
 
-// slowFast = new SlowFastUI(600, 280, window.devicePixelRatio);
-const shorter = innerWidth < innerHeight ? innerWidth : innerHeight;
-slowFast = new SlowFastUI(shorter, shorter / 2, window.devicePixelRatio);
-
+slowFast = new SlowFastUI(600, 280, window.devicePixelRatio);
 click = new ClickHandler(slowFast.dom);
 
 // ticker = new Ticker();
@@ -535,12 +532,12 @@ speedLabel = new Label('Speed', Object.assign({top: 10, left: 10}, LABEL_STYLE))
 animate();
 
 let rotated = false;
+
 const resize = () => {
     // slowFast.resize(slowFast.width, slowFast.height, window.devicePixelRatio);
-    const shorter = innerWidth < innerHeight ? innerWidth : innerHeight;
+    const shorter = Math.min(innerWidth < innerHeight ? innerWidth : innerHeight, 650);
     if (innerWidth > innerHeight) {
         document.body.style.transform = 'rotate(90deg)';
-        document.body.style.transformOrigin= '50% 50%';
         rotated = true;
     }
     else {
