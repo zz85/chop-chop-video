@@ -70,6 +70,10 @@ Creative Common Videos
 - http://www.wedistill.io/videos/175
 - http://www.wedistill.io/videos/100
 - http://mazwai.com/#/videos/221
+
+http://www.quirksmode.org/mobile/viewports.html
+http://www.quirksmode.org/mobile/viewports2.html
+
 */
 
 class SlowFastUI {
@@ -101,8 +105,8 @@ class SlowFastUI {
         const canvas = this.dom;
         canvas.width = width * scale;
         canvas.height = height * scale;
-        canvas.style.width = width;
-        canvas.style.height = height;
+        canvas.style.width = width + 'px';
+        canvas.style.height = height + 'px';
         this.scale = scale;
         this.width = width;
         this.height = height;
@@ -287,6 +291,7 @@ class ClickHandler extends EHandler {
         this.bind('mouseup', this.onmouseup);
 
         this.bind('touchstart', this.ontouchstart);
+        this.bind('touchmove', this.ontouchmove);
     }
 
     unhandle() {
@@ -296,12 +301,27 @@ class ClickHandler extends EHandler {
     }
 
     ontouchstart(e) {
+        const { clientX, clientY, pageX, pageY } = e.touches[0];
+        
+        const { left, top } = this.dom.getBoundingClientRect();
+        console.log(left, top, clientX, clientY, pageX, pageY, e.touches[0]);
+        // console.log('ontouchstart', {
+        //     x: clientX - left,
+        //     y: clientY - top
+        // });
+        const x = clientX - left;
+        const y = clientY - top;
+
+        console.log(x, y);
+        this.ondragdown(x, y);
+    }
+
+    ontouchmove(e) {
         const { clientX, clientY } = e.touches[0];
         const { left, top } = this.dom.getBoundingClientRect();
-        console.log('ontouchstart', {
-            x: clientX - left,
-            y: clientY - top
-        });
+        const x = clientX - left;
+        const y = clientY - top;
+        this.onmousemove2(x, y);
     }
 
     onmousedown(e) {
@@ -484,7 +504,11 @@ class VideoTicker {
     }
 }
 
+// 600, 280
+// window.innerWidth / window.devicePixelRatio, window.innerWidth / 2 / window.devicePixelRatio
 slowFast = new SlowFastUI(600, 280);
+// slowFast = new SlowFastUI(screen.width, screen.width / 2);
+
 console.log(slowFast.dom);
 click = new ClickHandler(slowFast.dom);
 
@@ -511,14 +535,27 @@ speedLabel = new Label('Speed', Object.assign({top: 10, left: 10}, LABEL_STYLE))
 animate();
 
 window.addEventListener('resize', () => {
-    console.log('resize', window.devicePixelRatio);
+    console.log('resize', innerWidth, innerHeight, window.devicePixelRatio);
     slowFast.resize(slowFast.width, slowFast.height, window.devicePixelRatio);
 });
 
-window.addEventListener('mousedown', (e) => {
+document.body.addEventListener('mousedown', (e) => {
     e.preventDefault();
-    // e.stopPropagation();
 });
+
+document.body.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    // onselectstart
+    // user select
+    // -webkit-touch-callout:none;
+    // -webkit-user-select:none;
+    // -khtml-user-select:none;
+    // -moz-user-select:none;
+    // -ms-user-select:none;
+    // user-select:none;
+    // -webkit-tap-highlight-color:rgba(0,0,0,0);
+});
+
 
 // var z = {};
 // Object.keys(window).filter(k => /^on/.test(k)).forEach(k => {
