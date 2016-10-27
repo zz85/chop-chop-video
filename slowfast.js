@@ -77,12 +77,12 @@ http://www.quirksmode.org/mobile/viewports2.html
 */
 
 class SlowFastUI {
-    constructor(width, height) {
+    constructor(width, height, scale) {
         const canvas = document.createElement('canvas');
 
         this.dom = canvas;
 
-        this.resize(width, height, window.devicePixelRatio);
+        this.resize(width, height, scale);
 
         this.ctx = canvas.getContext('2d');
 
@@ -292,6 +292,7 @@ class ClickHandler extends EHandler {
 
         this.bind('touchstart', this.ontouchstart);
         this.bind('touchmove', this.ontouchmove);
+        this.bind('touchend', this.ontouchend);
     }
 
     unhandle() {
@@ -301,19 +302,12 @@ class ClickHandler extends EHandler {
     }
 
     ontouchstart(e) {
-        const { clientX, clientY, pageX, pageY } = e.touches[0];
-        
+        const { clientX, clientY } = e.touches[0];
         const { left, top } = this.dom.getBoundingClientRect();
-        console.log(left, top, clientX, clientY, pageX, pageY, e.touches[0]);
-        // console.log('ontouchstart', {
-        //     x: clientX - left,
-        //     y: clientY - top
-        // });
+        console.log(clientX, clientY, left, top, e);
         const x = clientX - left;
         const y = clientY - top;
-
-        console.log(x, y);
-        this.ondragdown(x, y);
+        this.onpokedown(x, y);
     }
 
     ontouchmove(e) {
@@ -321,19 +315,38 @@ class ClickHandler extends EHandler {
         const { left, top } = this.dom.getBoundingClientRect();
         const x = clientX - left;
         const y = clientY - top;
-        this.onmousemove2(x, y);
+        this.onpokemove(x, y);
+    }
+
+    ontouchend(e) {
+        this.onpokeup();
     }
 
     onmousedown(e) {
         const { clientX, clientY } = e;
-        console.log(e);
         const { left, top } = this.dom.getBoundingClientRect();
         const x = clientX - left;
         const y = clientY - top;
-        this.ondragdown(x, y)
+        this.onpokedown(x, y);
     }
 
-    ondragdown(mx, my) {
+    onmousemove(e) {
+        const { clientX, clientY } = e;
+        const { left, top } = this.dom.getBoundingClientRect();
+        const x = clientX - left;
+        const y = clientY - top;
+        this.onpokemove(x, y);
+    }
+
+    onmouseup(e) {
+        const { clientX, clientY } = e;
+        const { left, top } = this.dom.getBoundingClientRect();
+        const x = clientX - left;
+        const y = clientY - top;
+        this.onpokeup(x, y);
+    }
+
+    onpokedown(mx, my) {
         const node = findNode(mx, my);
         if (node) {
             this.nodeDown = {
@@ -374,15 +387,7 @@ class ClickHandler extends EHandler {
 
     }
 
-    onmousemove(e) {
-        const { clientX, clientY } = e;
-        const { left, top } = this.dom.getBoundingClientRect();
-        const x = clientX - left;
-        const y = clientY - top;
-        this.onmousemove2(x, y)
-    }
-
-    onmousemove2(mx, my) {
+    onpokemove(mx, my) {
 
         // update line
         // slowFast.line.x0 = slowFast.line.x1 = mx;
@@ -413,7 +418,7 @@ class ClickHandler extends EHandler {
         }
     }
 
-    onmouseup(e) {
+    onpokeup(e) {
         this.nodeDown = null;
     }
 }
@@ -504,12 +509,10 @@ class VideoTicker {
     }
 }
 
-// 600, 280
-// window.innerWidth / window.devicePixelRatio, window.innerWidth / 2 / window.devicePixelRatio
-slowFast = new SlowFastUI(600, 280);
-// slowFast = new SlowFastUI(screen.width, screen.width / 2);
+// slowFast = new SlowFastUI(600, 280, window.devicePixelRatio);
+const shorter = innerWidth < innerHeight ? innerWidth : innerHeight;
+slowFast = new SlowFastUI(shorter, shorter / 2, window.devicePixelRatio);
 
-console.log(slowFast.dom);
 click = new ClickHandler(slowFast.dom);
 
 // ticker = new Ticker();
@@ -535,9 +538,40 @@ speedLabel = new Label('Speed', Object.assign({top: 10, left: 10}, LABEL_STYLE))
 animate();
 
 window.addEventListener('resize', () => {
-    console.log('resize', innerWidth, innerHeight, window.devicePixelRatio);
-    slowFast.resize(slowFast.width, slowFast.height, window.devicePixelRatio);
+    // slowFast.resize(slowFast.width, slowFast.height, window.devicePixelRatio);
+    const shorter = innerWidth < innerHeight ? innerWidth : innerHeight;
+    if (innerWidth > innerHeight) {
+        document.body.style.transform = 'rotate(90deg)';
+    }
+    else {
+        document.body.style.transform = '';
+    }
+    slowFast.resize(shorter, shorter / 2, window.devicePixelRatio);
 });
+
+window.addEventListener('orientationchange', (e) => {
+    switch (window.orientation) {
+    case 0:
+        // Portrait
+        document.body.style.transform = 'rotate(0deg)';
+        break;
+    case 180:
+        // Portrait (Upside-down)
+        document.body.style.transform = 'rotate(0deg)';
+        break;
+
+    case -90:
+        // Landscape (Clockwise)
+        document.body.style.transform = 'rotate(90deg)';
+        break;
+
+    case 90:
+        // Landscape  (Counterclockwise)
+        document.body.style.transform = 'rotate(-90deg)';
+        break;
+    }
+});
+
 
 document.body.addEventListener('mousedown', (e) => {
     e.preventDefault();
@@ -545,15 +579,6 @@ document.body.addEventListener('mousedown', (e) => {
 
 document.body.addEventListener('touchstart', (e) => {
     e.preventDefault();
-    // onselectstart
-    // user select
-    // -webkit-touch-callout:none;
-    // -webkit-user-select:none;
-    // -khtml-user-select:none;
-    // -moz-user-select:none;
-    // -ms-user-select:none;
-    // user-select:none;
-    // -webkit-tap-highlight-color:rgba(0,0,0,0);
 });
 
 
