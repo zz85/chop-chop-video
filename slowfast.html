@@ -9,22 +9,27 @@
                 font-family: 'Helvetica';
                 margin: 0px;
                 overflow: hidden;
-                /*
-                width: 100%;
-                height: 100%;
-                */
             }
 
             html {
-                /*
-                width: 100%;
-                height: 100%;
-                */
+
             }
 
             #container {
-                display: block;
+                display: flex;
+                flex-direction: column;
                 max-width: 650px;
+                border: 1px solid red;
+                margin: 5px;
+                padding: 5px;
+            }
+
+            video {
+                flex: 1;
+            }
+
+            canvas {
+                flex: 1;
             }
         </style>
     </head>
@@ -32,19 +37,13 @@
     <script src="lib/unit-bezier.js"></script>
     <script src="lib/easing.js"></script>
     <script src="lib/slowfastui.js"></script>
-    <br/>
 
     <div id="container">
         <!--<video id="video" src="videos/50thStateFair2012-HD.mp4.mp4" width="600" controls autoplay loop />-->
         <video id="video" src="videos/lighthouse.mp4" width="100%" controls loop preload="auto"/>
-        <!--autoplay width="600"-->
-        <!--setInterval( () => { video.currentTime += 0.1 }, 100 )-->
-        <br/>
-
         <script src="slowfast.js"></script>
     </div>
 
-    <h1>Slow Fast</h1>
     <p>
         Inspired by the <a href="https://www.studioneat.com/products/slowfast">Slow Fast Slow</a> app.<br/>
         Source code on <a href="https://zz85.github.io/chop-chop-video/">github</a>.<br/>

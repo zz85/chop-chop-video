@@ -276,7 +276,6 @@ class EHandler {
     }
 }
 
-
 class ClickHandler extends EHandler {
     constructor(dom) {
         super(dom);
@@ -306,9 +305,9 @@ class ClickHandler extends EHandler {
         const { left, top } = this.dom.getBoundingClientRect();
         const x = clientX - left;
         const y = clientY - top;
-        if (rotated) {
+        if (this.rotateHack) {
             return {
-                x: y, y: slowFast.height - x
+                x: y, y: e.target.clientHeight - x
             };
         }
         return {x, y};
@@ -531,18 +530,21 @@ speedLabel = new Label('Speed', Object.assign({top: 10, left: 10}, LABEL_STYLE))
 
 animate();
 
-let rotated = false;
-
 const resize = () => {
     // slowFast.resize(slowFast.width, slowFast.height, window.devicePixelRatio);
     const shorter = Math.min(innerWidth < innerHeight ? innerWidth : innerHeight, 650);
+    document.body.style.maxWidth = shorter + 'px';
     if (innerWidth > innerHeight) {
-        document.body.style.transform = 'rotate(90deg)';
-        rotated = true;
+        const dx = (innerWidth - innerHeight) / 2;
+        // container.style
+        document.body.style.transform = `rotate(90deg) `; // translate(${dx}px, ${-dx}px)
+        document.body.style.height = innerHeight + 'px';
+        click.rotateHack = true;
     }
     else {
         document.body.style.transform = '';
-        rotated = false;
+        document.body.style.height = '';
+        click.rotateHack = false;
     }
 
     slowFast.resize(shorter, shorter / 2, window.devicePixelRatio);
@@ -552,42 +554,6 @@ resize();
 
 window.addEventListener('resize', resize);
 
-/*
-window.matchMedia('(orientation: portrait)').addListener(function(e) {
-    if (!e.matches) return;
-    console.log('hoho portrait', e)
-    resize();
-});
-
-window.matchMedia('(orientation: landscape)').addListener(function(e) {
-    if (!e.matches) return;
-    console.log('hoho landscape', e)
-    resize();
-});
-
-window.addEventListener('orientationchange', (e) => {
-    switch (window.orientation) {
-    case 0:
-        // Portrait
-        document.body.style.transform = 'rotate(0deg)';
-        break;
-    case 180:
-        // Portrait (Upside-down)
-        document.body.style.transform = 'rotate(0deg)';
-        break;
-
-    case -90:
-        // Landscape (Clockwise)
-        document.body.style.transform = 'rotate(90deg)';
-        break;
-
-    case 90:
-        // Landscape  (Counterclockwise)
-        document.body.style.transform = 'rotate(-90deg)';
-        break;
-    }
-});*/
-
 document.body.addEventListener('mousedown', (e) => {
     e.preventDefault();
 });
@@ -595,15 +561,6 @@ document.body.addEventListener('mousedown', (e) => {
 document.body.addEventListener('touchstart', (e) => {
     e.preventDefault();
 });
-
-
-// var z = {};
-// Object.keys(window).filter(k => /^on/.test(k)).forEach(k => {
-//     window[k] = (e) => {
-//         if (!z[k]) console.log(k, e)
-//         z[k] = 1;
-//     }
-// })
 
 function animate() {
     const t = ticker.currentTime / ticker.duration;
