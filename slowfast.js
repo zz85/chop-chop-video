@@ -593,7 +593,7 @@ function animate() {
 }
 
 function serialize() {
-    return JSON.stringify(slowFast.points);
+    return JSON.stringify(slowFast.points.map(p=>({x: p.x.toFixed(3), y: p.y.toFixed(3)})));
 }
 
 const history = {};
