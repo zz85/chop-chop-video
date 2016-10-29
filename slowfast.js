@@ -30,15 +30,18 @@ class SlowFast {
 
     DONE
     - time ticker slider
+    - encode videos to smaller sizes for github!
+    - fix mouse events!
+
 
     TODO
-    - encode videos to smaller sizes for github!
     - split up touch / click to behaviour events
     - drag beyond canvas
     - retina support
     - to make time go backwards, should calculate entire length of spline
-    - fix mouse events!
     - proper video loader and container
+    - playback controls
+    - save and load
     */
 }
 
@@ -88,6 +91,10 @@ class SlowFastUI {
 
         container.appendChild(canvas);
 
+        this.reset();
+    }
+
+    reset() {
         this.points = []; // list of {x, y} in floating points
         this.points.push({x: 0, y: 0});
         this.points.push({x: 0.333, y: 0});
@@ -95,10 +102,6 @@ class SlowFastUI {
         // this.points.push({x: 0.25, y: 0.5}); // this.points.push({x: 0.25, y: 0});
         // this.points.push({x: 0.75, y: -0.5}); // this.points.push({x: 0.75, y: 0});
         this.points.push({x: 1, y: 0});
-
-        this.line = new Line({
-            x0: 0, y0: 0, x1: 0, y1: height
-        });
     }
 
     resize(width, height, scale) {
@@ -110,6 +113,10 @@ class SlowFastUI {
         this.scale = scale;
         this.width = width;
         this.height = height;
+
+        this.line = new Line({
+            x0: 0, y0: 0, x1: 0, y1: this.height
+        });
     }
 
     setTime(t) {
@@ -364,6 +371,7 @@ class ClickHandler extends EHandler {
                     x: mx,
                     y: my
                 }));
+                save();
             }
         }
     }
@@ -379,6 +387,7 @@ class ClickHandler extends EHandler {
             const index = points.indexOf(node.tag);
             if (index === 0 || index === points.length - 1) return;
             points.splice(index, 1);
+            save();
         }
 
     }
@@ -415,6 +424,9 @@ class ClickHandler extends EHandler {
     }
 
     onpokeup(e) {
+        if (this.nodeDown) {
+            save();
+        }
         this.nodeDown = null;
     }
 }
@@ -442,7 +454,7 @@ class Label {
         this.dom = document.createElement('span');
         this.dom.style.fontFamily = 'monospace';
         Object.assign(this.dom.style, style);
-        document.body.appendChild(this.dom);
+        container.appendChild(this.dom);
         this.label = label;
     }
 
@@ -521,20 +533,24 @@ const LABEL_STYLE = {
     color: TXT_COLOR,
     padding: '6px',
     borderRadius: '6px',
-    left: 'auto',
-    right: 'auto'
+    left: '250px',
+    top: '10px',
+    right: 'auto',
+    textAlign: 'center',
+    opacity: 0.7
 };
 
 timeLabel = new Label('Time', LABEL_STYLE);
-speedLabel = new Label('Speed', Object.assign({top: 10, left: 10}, LABEL_STYLE));
+speedLabel = new Label('Speed', Object.assign({}, LABEL_STYLE, { top: '320px' }));
 
 animate();
 
 const resize = () => {
     // slowFast.resize(slowFast.width, slowFast.height, window.devicePixelRatio);
-    const shorter = Math.min(innerWidth < innerHeight ? innerWidth : innerHeight, 650);
+    const rotate = window.orientation && innerWidth > innerHeight;
+    const shorter = Math.min(rotate ? innerHeight : innerWidth, 650);
     document.body.style.maxWidth = shorter + 'px';
-    if (innerWidth > innerHeight) {
+    if (rotate) {
         const dx = (innerWidth - innerHeight) / 2;
         // container.style
         document.body.style.transform = `rotate(90deg) `; // translate(${dx}px, ${-dx}px)
@@ -576,3 +592,19 @@ function animate() {
     slowFast.render();
     requestAnimationFrame(animate);
 }
+
+function serialize() {
+    return JSON.stringify(slowFast.points);
+}
+
+const history = {};
+
+function save() {
+    window.history.replaceState(history, 'Slow Fast', '#' + serialize())
+}
+
+function load() {
+    slowFast.points = [{"x":0,"y":0},{"x":0.24684615384615388,"y":-0.7015384615384616},{"x":0.5116153846153846,"y":0.11692307692307691},{"x":0.7676923076923077,"y":-0.32778846153846153},{"x":1,"y":0}];
+}
+
+if (location.hash.length) { slowFast.points = JSON.parse(location.hash.substring(1)) }

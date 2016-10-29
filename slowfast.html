@@ -12,16 +12,17 @@
             }
 
             html {
-
+                background: #999;
             }
 
             #container {
                 display: flex;
                 flex-direction: column;
                 max-width: 650px;
+                /*
                 border: 1px solid red;
-                margin: 5px;
                 padding: 5px;
+                */
             }
 
             video {
@@ -39,8 +40,8 @@
     <script src="lib/slowfastui.js"></script>
 
     <div id="container">
-        <!--<video id="video" src="videos/50thStateFair2012-HD.mp4.mp4" width="600" controls autoplay loop />-->
-        <video id="video" src="videos/lighthouse.mp4" width="100%" controls loop preload="auto"/>
+        <!--<video id="video" src="videos/50thStateFair2012_480p.mp4" width="600" controls autoplay loop />-->
+        <video id="video" src="videos/lighthouse_480p.mp4" width="100%" autoplay loop preload="auto"/>
         <script src="slowfast.js"></script>
     </div>
 
@@ -48,6 +49,10 @@
         Inspired by the <a href="https://www.studioneat.com/products/slowfast">Slow Fast Slow</a> app.<br/>
         Source code on <a href="https://zz85.github.io/chop-chop-video/">github</a>.<br/>
         Videos from <a href="http://www.wedistill.io">Distill</a>.<br/>
+
+        <button onclick="slowFast.reset()">Reset Points</button>
+        <!--<button onclick="load()">Load Points</button>-->
+
     </p>
 
 </body>
