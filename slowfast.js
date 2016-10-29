@@ -593,7 +593,11 @@ function animate() {
 }
 
 function serialize() {
-    return JSON.stringify(slowFast.points.map(p=>({x: p.x.toFixed(3), y: p.y.toFixed(3)})));
+    return JSON.stringify(slowFast.points.map(p=>([decimal_3(p.x), decimal_3(p.y)])));
+}
+
+function decimal_3(v) {
+    return (v * 1000 | 0) / 1000;
 }
 
 const history = {};
@@ -602,8 +606,10 @@ function save() {
     window.history.replaceState(history, 'Slow Fast', '#' + serialize())
 }
 
-function load() {
-    slowFast.points = [{"x":0,"y":0},{"x":0.24684615384615388,"y":-0.7015384615384616},{"x":0.5116153846153846,"y":0.11692307692307691},{"x":0.7676923076923077,"y":-0.32778846153846153},{"x":1,"y":0}];
+function load(v) {
+    const a = JSON.parse(v);
+    slowFast.points = a.map(([x, y]) => ({x: parseFloat(x, 10), y: parseFloat(y, 10)}));
+    // slowFast.points = [{"x":0,"y":0},{"x":0.24684615384615388,"y":-0.7015384615384616},{"x":0.5116153846153846,"y":0.11692307692307691},{"x":0.7676923076923077,"y":-0.32778846153846153},{"x":1,"y":0}];
 }
 
-if (location.hash.length) { slowFast.points = JSON.parse(location.hash.substring(1)) }
+if (location.hash.length) { load(location.hash.substring(1)) }
