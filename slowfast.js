@@ -32,16 +32,16 @@ class SlowFast {
     - time ticker slider
     - encode videos to smaller sizes for github!
     - fix mouse events!
+    - save and load
+    - retina support
 
 
     TODO
     - split up touch / click to behaviour events
     - drag beyond canvas
-    - retina support
     - to make time go backwards, should calculate entire length of spline
     - proper video loader and container
     - playback controls
-    - save and load
     */
 }
 
@@ -70,7 +70,6 @@ https://github.com/llun/slowfast/blob/master/lib/transitions.js
 My guess from the behaviour of the slowfast app is bezier curves are being used.
 
 Creative Common Videos
-- http://www.wedistill.io/videos/175
 - http://www.wedistill.io/videos/100
 - http://mazwai.com/#/videos/221
 
