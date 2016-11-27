@@ -635,4 +635,8 @@ function load(v) {
     // slowFast.points = [{"x":0,"y":0},{"x":0.24684615384615388,"y":-0.7015384615384616},{"x":0.5116153846153846,"y":0.11692307692307691},{"x":0.7676923076923077,"y":-0.32778846153846153},{"x":1,"y":0}];
 }
 
+function pausePlayback() {
+    ticker.video.paused ? ticker.video.play() : ticker.video.pause()
+}
+
 if (location.hash.length) { load(location.hash.substring(1)) }
