@@ -286,6 +286,7 @@ class ClickHandler extends EHandler {
     constructor(dom) {
         super(dom);
         this.nodeDown = null;
+        this.mouseDown = null;
         this.handle();
     }
 
@@ -360,19 +361,11 @@ class ClickHandler extends EHandler {
             }
         }
         else {
-            // - W
-            const p = slowFast.findClosestPoints(mx / slowFast.width);
-            const points = slowFast.points;
-            if (p[0]) {
-                const insert = points.indexOf(p[1]);
-
-                points.splice(insert, 0, slowFast.convertCoordsToPoint({
-                    x: mx,
-                    y: my
-                }));
-                save();
-            }
+            // move current time to point
+            const t = mx / slowFast.width;
+            ticker.currentTime = t;
         }
+        this.mouseDown = true;
     }
 
     ondblclick(e) {
@@ -387,6 +380,21 @@ class ClickHandler extends EHandler {
             if (index === 0 || index === points.length - 1) return;
             points.splice(index, 1);
             save();
+        }
+        else {
+            // Add an additional point on double clicking
+            // - W
+            const p = slowFast.findClosestPoints(mx / slowFast.width);
+            const points = slowFast.points;
+            if (p[0]) {
+                const insert = points.indexOf(p[1]);
+
+                points.splice(insert, 0, slowFast.convertCoordsToPoint({
+                    x: mx,
+                    y: my
+                }));
+                save();
+            }
         }
 
     }
@@ -420,6 +428,12 @@ class ClickHandler extends EHandler {
                 document.body.style.cursor = 'auto';
             }
         }
+
+        if (this.mouseDown) {
+            // move current time to point
+            const t = mx / slowFast.width;
+            ticker.currentTime = t;
+        }
     }
 
     onpokeup(e) {
@@ -427,6 +441,7 @@ class ClickHandler extends EHandler {
             save();
         }
         this.nodeDown = null;
+        this.mouseDown = false;
     }
 }
 
@@ -495,6 +510,10 @@ class TimeControlVideoTicker {
         this.lastTick = now;
         video.currentTime = this.currentTime / 1000;
     }
+
+    set currentTime(t) {
+        this.currentTime = t * this.duration;
+    }
 }
 
 class VideoTicker {
@@ -504,6 +523,10 @@ class VideoTicker {
 
     get currentTime() {
         return this.video.currentTime * 1000;
+    }
+
+    set currentTime(t) {
+        this.video.currentTime = t * this.video.duration;
     }
 
     get duration() {
