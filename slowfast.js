@@ -645,20 +645,35 @@ function mediaRecord() {
     }
     ticker.currentTime = 0;
 
-    // const canvas = document.createElement('canvas');
-    // canvas.width = video.videoWidth;
-    // canvas.height = video.videoHeight;
-    // const ctx = canvas.getContext('2d');
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
 
     videoStream = video.mozCaptureStream(); // mozCaptureStreamUntilEnded mozCaptureStream
-    recorder = new MediaRecorder(videoStream, {
+
+    mediaStream = new MediaStream();
+
+    ct = canvas.captureStream().getVideoTracks().forEach( v => mediaStream.addTrack(v) );
+    // videoStream.getAudioTracks().forEach( v => mediaStream.addTrack(v) );
+
+    let frames = 0;
+    ctx.font = '48px serif';
+
+    setInterval( () => {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        ctx.fillText('Give me frame ' + frames + ' / ' + ticker.video.currentTime + '/' + ticker.video.playbackRate  , 50, 50);
+        frames++;
+    }, 30);
+
+    recorder = new MediaRecorder(mediaStream, { // mediaStream videoStream
         mimeType: 'video/webm' // video/mp4 or video/webm
     });
 
-    // videoStream.getTracks()
-    // videoStream.getVideoTracks()
-
     pausePlayback()
+    // ticker.currentTime = 0.2;
+    ticker.video.playbackRate = 15;
 
     recorder.addEventListener('dataavailable', function(e) {
         console.log(e);
