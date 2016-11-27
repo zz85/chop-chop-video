@@ -639,4 +639,43 @@ function pausePlayback() {
     ticker.video.paused ? ticker.video.play() : ticker.video.pause()
 }
 
+function mediaRecord() {
+    if (!ticker.video.paused) {
+        ticker.video.pause();
+    }
+    ticker.currentTime = 0;
+
+    // const canvas = document.createElement('canvas');
+    // canvas.width = video.videoWidth;
+    // canvas.height = video.videoHeight;
+    // const ctx = canvas.getContext('2d');
+
+    videoStream = video.mozCaptureStream(); // mozCaptureStreamUntilEnded mozCaptureStream
+    recorder = new MediaRecorder(videoStream, {
+        mimeType: 'video/webm' // video/mp4 or video/webm
+    });
+
+    // videoStream.getTracks()
+    // videoStream.getVideoTracks()
+
+    pausePlayback()
+
+    recorder.addEventListener('dataavailable', function(e) {
+        console.log(e);
+
+        const video = document.createElement('video');
+        video.src = URL.createObjectURL(e.data);
+        video.controls = true;
+        document.body.appendChild(video);
+        video.play();
+    });
+
+    // start recording here...
+    recorder.start();
+
+    setTimeout( () => {
+        pausePlayback();
+        recorder.stop() }, 5000);
+}
+
 if (location.hash.length) { load(location.hash.substring(1)) }
