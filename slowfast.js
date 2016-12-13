@@ -650,11 +650,17 @@ function mediaRecord() {
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext('2d');
 
-    videoStream = video.mozCaptureStream(); // mozCaptureStreamUntilEnded mozCaptureStream
+    const audioCtx = new AudioContext();
+    const source = audioCtx.createMediaElementSource(video);
+
+    const dest = audioCtx.createMediaStreamDestination();
+    source.connect(dest);
+    // videoStream = video.mozCaptureStream(); // mozCaptureStreamUntilEnded mozCaptureStream
 
     mediaStream = new MediaStream();
 
     ct = canvas.captureStream().getVideoTracks().forEach( v => mediaStream.addTrack(v) );
+    // dest.stream.getAudioTracks().forEach( v => mediaStream.addTrack(v) );
     // videoStream.getAudioTracks().forEach( v => mediaStream.addTrack(v) );
 
     let frames = 0;
@@ -665,16 +671,14 @@ function mediaRecord() {
 
         ctx.fillText('Give me frame ' + frames + ' / ' + ticker.video.currentTime + '/' + ticker.video.playbackRate  , 50, 50);
         frames++;
+        // console.log(frames);
     }, 30);
 
     recorder = new MediaRecorder(mediaStream, { // mediaStream videoStream
-        mimeType: 'video/webm' // video/mp4 or video/webm
+        // mimeType: 'video/webm' // video/mp4 or video/webm
     });
 
     pausePlayback()
-    // ticker.currentTime = 0.2;
-    ticker.video.playbackRate = 15;
-
     recorder.addEventListener('dataavailable', function(e) {
         console.log(e);
 
